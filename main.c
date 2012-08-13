@@ -8,6 +8,7 @@ struct request_details
 };
 
 
+
 int main()
 {
 struct request_details request1,*request1_ptr=&request1;
