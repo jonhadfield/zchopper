@@ -14,6 +14,7 @@
 #define  MAX_RESP_BYTES     20 
 #define  MAX_REFERER      2083 //Safe limit?
 #define  MAX_AGENT        1024 //Safe limit?
+#define  BATCH_SIZE       1000
 
 typedef struct {
 	char req_ip[MAX_IP];
@@ -29,7 +30,6 @@ typedef struct {
 	char req_agent[MAX_AGENT];
 } st_http_request;
 
-
 int main (int argc, char *argv[]) {
 
   FILE *pRead;
@@ -40,53 +40,40 @@ int main (int argc, char *argv[]) {
 
   char log_line[MAX_LINE_LENGTH];
   int counter = 0;
+  int running_total = 0;
   int line_length = 0;
   while (fgets(log_line, 8192, pRead) != NULL) {
-  //printf("\n\n\nstart of loop\n");
-
-    /*printf("line no.: %d\n",counter);
-    printf("logline: %s\n",log_line);
-    printf("logline length: %d\n",line_length);
-    printf("penult char is: %c\n",log_line[line_length-3]);
-    printf("got here 4\n");*/
-
     line_length = strlen(log_line);
     if (line_length > MAX_LINE_LENGTH-1) {
-      printf("Encountered a stupidly long line of over 8KB\nGoodbye!!!");
+      printf("Encountered a stupidly long line of over 8KB\nLog file must be poop. Exiting.");
       exit(1);
-    }else{
-
+    } else {
       sscanf(log_line, "%s %s %s [%[^]]] \"%s %s %[^\"]\" %s %s \"%[^\"]\" \"%[^\"]\"", \
-                     p[counter].req_ip, p[counter].req_ident, \
-                     p[counter].req_user, p[counter].req_datetime, \
-                     p[counter].req_method, p[counter].req_uri, \
-                     p[counter].req_proto, \
-                     p[counter].resp_code, p[counter].resp_bytes, \
-                     p[counter].req_referer, p[counter].req_agent);
-
-      /*printf("scanned line\n");
-      printf("ip:%s, ip len:%d\n",p[counter].req_ip,(int)strlen(p[counter].req_ip));
-      printf("ident:%s\n",p[counter].req_ident);
-      printf("user:%s\n",p[counter].req_user);
-      printf("datetime:%s\n",p[counter].req_datetime);
-      printf("reqmethod:%s\n",p[counter].req_method);
-      printf("requri:%s\n",p[counter].req_uri);
-      printf("reqproto:%s\n",p[counter].req_proto);
-      printf("reqcode:%s\n",p[counter].resp_code);
-      printf("respbytes:%s\n",p[counter].resp_bytes);
-      printf("reqreferer:%s\n",p[counter].req_referer);
-      printf("reqagent:%s\n",p[counter].req_agent);*/
+        p[counter].req_ip, p[counter].req_ident, \
+        p[counter].req_user, p[counter].req_datetime, \
+        p[counter].req_method, p[counter].req_uri, \
+        p[counter].req_proto, \
+        p[counter].resp_code, p[counter].resp_bytes, \
+        p[counter].req_referer, p[counter].req_agent);
 
       tmp = (st_http_request *) realloc ( p, (counter+2) * sizeof(st_http_request) );
       if (tmp == NULL) { 
-        printf("pants!!!");
+        printf("Failed to increase memory allocation.");
+        exit(1);
       } else {
         p = tmp; 
       }
+      running_total++;
     }
-    counter++;
+    if (counter == (BATCH_SIZE-1)) {
+      //printf("flushing %d\n",BATCH_SIZE);
+      counter = 0;
+    }else{
+      counter++;
+    }
   }
-  printf("Scanned: %d lines.\n",counter);
+  //printf("flushing remaining %d\n",counter);
+  printf("Scanned: %d lines.\n",running_total);
   free(p);
   return(0);
 }
