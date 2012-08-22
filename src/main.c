@@ -58,7 +58,7 @@ struct globalArgs_t {
 	const char *outFileName;	        /* -o option */
 	FILE *outFile;
 	char *type;				/* -t option */
-	int  batch_size;			/* -b option */
+	char *batch_size;			/* -b option */
 	char *ip;				/* -i option */
 	char *port;				/* -p option */
 	int verbose;				/* verbosity */
@@ -85,13 +85,11 @@ void display_usage( void )
 	exit( EXIT_FAILURE );
 }
 
-/* Convert the input files to HTML, governed by globalArgs.
- *  */
 int chop( void )
 {
 	printf( "outFileName: %s\n", globalArgs.outFileName );
 	printf( "type: %s\n", globalArgs.type );
-	printf( "batch_size: %d\n", globalArgs.batch_size );
+	printf( "batch_size: %s\n", globalArgs.batch_size );
 	printf( "ip: %s\n", globalArgs.ip);
 	printf( "port: %s\n", globalArgs.port);
 	printf( "verbose: %d\n", globalArgs.verbose );
@@ -106,8 +104,15 @@ int chop( void )
       st_http_request *p,*tmp;
       p = (st_http_request *)malloc(sizeof(st_http_request)*2);
       char log_line[MAX_LINE_LENGTH];
+      //memset(&log_line[0], 0, sizeof(log_line));
       int counter = 0;
       int line_length = 0;
+      int use_batch_size;
+      if ( globalArgs.batch_size != '\0' ) {
+        use_batch_size = atoi(globalArgs.batch_size);
+      } else {
+        use_batch_size = BATCH_SIZE;
+      } 
 
       while (fgets(log_line, 8192, pRead) != NULL) {
 	line_length = strlen(log_line);
@@ -131,8 +136,8 @@ int chop( void )
 	  }
 	  running_total++;
 	}
-	if (counter == (BATCH_SIZE-1)) {
-	  //printf("flushing %d\n",BATCH_SIZE);
+	if (counter == (use_batch_size-1)) {
+	  //printf("flushing %d\n",batch_size);
 	  counter = 0;
 	}else{
 	  counter++;
@@ -152,7 +157,7 @@ int main (int argc, char *argv[]) {
 	globalArgs.outFileName = NULL;
 	globalArgs.outFile = NULL;
 	globalArgs.type = NULL;
-	globalArgs.batch_size = BATCH_SIZE;
+	globalArgs.batch_size = NULL;
 	globalArgs.ip = NULL;
 	globalArgs.port = NULL;
 	globalArgs.verbose = 0;
@@ -169,7 +174,7 @@ int main (int argc, char *argv[]) {
 				globalArgs.type = optarg;
 				break;
 			case 'b':
-				globalArgs.batch_size = atoi(optarg);
+				globalArgs.batch_size = optarg;
 				break;
 			case 'i':
 				globalArgs.ip = optarg;
