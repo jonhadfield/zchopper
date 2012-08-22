@@ -87,6 +87,23 @@ void display_usage( void )
 	exit( EXIT_FAILURE );
 }
 
+int flush_to_disk( FILE *fp, st_http_request *p, int counter )
+{
+	printf( "flushing %d lines to disk\n",counter );
+        int flush_count;
+        for ( flush_count = 0; flush_count <= counter; flush_count++) {
+          fprintf(fp, "%s %s %s %s %s %s %s %s %s %s %s\n", \
+            p[flush_count].req_ip, p[flush_count].req_ident, \
+            p[flush_count].req_user, p[flush_count].req_datetime, \
+            p[flush_count].req_method, p[flush_count].req_uri, \
+            p[flush_count].req_proto, \
+            p[flush_count].resp_code, p[flush_count].resp_bytes, \
+            p[flush_count].req_referer, p[flush_count].req_agent);
+   }
+
+        return(0);
+}
+
 int chop( void )
 {
 	printf( "outFileName: %s\n", globalArgs.outFileName );
@@ -100,6 +117,9 @@ int chop( void )
 	int running_total = 0;
    //LOOP THROUGH FILES
     FILE *pRead;
+    FILE *pWrite;
+    if ( globalArgs.outFileName != NULL )  pWrite = fopen(globalArgs.outFileName,"a+");
+
     int f_count;  
     for (f_count = 0; f_count < globalArgs.numInputFiles; f_count++) {
       printf("File %d: %s\n",f_count,globalArgs.inputFiles[f_count]);
@@ -123,7 +143,7 @@ int chop( void )
 	  printf("Encountered a stupidly long line of over 8KB\nLog file must be poop. Exiting.");
 	  exit(1);
 	} else {
-          if ((globalArgs.search_string != NULL) && (strstr(log_line,globalArgs.search_string) != NULL )) continue;
+          if ((globalArgs.search_string != NULL) && (strstr(log_line,globalArgs.search_string) == NULL )) continue;
 	  sscanf(log_line, "%s %s %s [%[^]]] \"%s %s %[^\"]\" %s %s \"%[^\"]\" \"%[^\"]\"", \
 	    p[counter].req_ip, p[counter].req_ident, \
 	    p[counter].req_user, p[counter].req_datetime, \
@@ -142,16 +162,16 @@ int chop( void )
 	  running_total++;
 	}
 	if (counter == (use_batch_size-1)) {
-	  //printf("flushing %d\n",batch_size);
+          if ( globalArgs.outFileName != NULL ) flush_to_disk( pWrite, p, counter );
 	  counter = 0;
 	}else{
 	  counter++;
 	}
       }
-    //END LOOP THROUGH FILES
-    //printf("flushing remaining %d\n",counter);
-    printf("Scanned: %d lines.\n",running_total);
+    if ( globalArgs.outFileName != NULL ) flush_to_disk( pWrite, p, counter );
+    printf("Scanned a total of: %d lines.\n",running_total);
     fclose(pRead);
+    //fclose(pWrite);
     free(p);
   }
   return(0);
@@ -213,5 +233,5 @@ int main (int argc, char *argv[]) {
 	globalArgs.numInputFiles = argc - optind;
         if(globalArgs.numInputFiles <= 0) display_usage();
 	chop();
-        return(0);
+        exit(0);
 }
