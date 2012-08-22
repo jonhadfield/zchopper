@@ -11,6 +11,7 @@
  * -b batch size - number of lines to process before flushing - debug only
  * -i ip of db server 
  * -p port of db server 
+ * -s search string
  * -v verbose output
  * additional file names are used as input files
  * 
@@ -22,6 +23,7 @@
  * --batchsize
  * --ip
  * --port
+ * --search_string
  * --verbose
  *
  */
