@@ -61,19 +61,21 @@ struct globalArgs_t {
 	char *batch_size;			/* -b option */
 	char *ip;				/* -i option */
 	char *port;				/* -p option */
+	char *search_string;			/* -s option */
 	int verbose;				/* verbosity */
 	char **inputFiles;			/* input files */
 	int numInputFiles;			/* # of input files */
 } globalArgs;
 
-static const char *optString = "o:t:b:i:p:vh?";
+static const char *optString = "o:t:b:i:p:s:vh?";
 
 static const struct option longOpts[] = {
-	{ "outFileName", no_argument, NULL, 'o' },
+	{ "outFileName", required_argument, NULL, 'o' },
 	{ "type", required_argument, NULL, 't' },
-	{ "batch_size", no_argument, NULL, 'b' },
-	{ "ip", no_argument, NULL, 'i' },
-	{ "port", no_argument, NULL, 'p' },
+	{ "batch_size", required_argument, NULL, 'b' },
+	{ "ip", required_argument, NULL, 'i' },
+	{ "port", required_argument, NULL, 'p' },
+	{ "search_string", required_argument, NULL, 's' },
 	{ "verbose", no_argument, NULL, 'v' },
 	{ "help", no_argument, NULL, 'h' },
 	{ NULL, no_argument, NULL, 0 }
@@ -92,6 +94,7 @@ int chop( void )
 	printf( "batch_size: %s\n", globalArgs.batch_size );
 	printf( "ip: %s\n", globalArgs.ip);
 	printf( "port: %s\n", globalArgs.port);
+	printf( "search_string: %s\n", globalArgs.search_string);
 	printf( "verbose: %d\n", globalArgs.verbose );
 	printf( "numInputFiles: %d\n", globalArgs.numInputFiles );
 	int running_total = 0;
@@ -120,6 +123,7 @@ int chop( void )
 	  printf("Encountered a stupidly long line of over 8KB\nLog file must be poop. Exiting.");
 	  exit(1);
 	} else {
+          if ((globalArgs.search_string != NULL) && (strstr(log_line,globalArgs.search_string) != NULL )) continue;
 	  sscanf(log_line, "%s %s %s [%[^]]] \"%s %s %[^\"]\" %s %s \"%[^\"]\" \"%[^\"]\"", \
 	    p[counter].req_ip, p[counter].req_ident, \
 	    p[counter].req_user, p[counter].req_datetime, \
@@ -127,6 +131,7 @@ int chop( void )
 	    p[counter].req_proto, \
 	    p[counter].resp_code, p[counter].resp_bytes, \
 	    p[counter].req_referer, p[counter].req_agent);
+          //If req_uri 
 	  tmp = (st_http_request *) realloc ( p, (counter+2) * sizeof(st_http_request) );
 	  if (tmp == NULL) { 
 	    printf("Failed to increase memory allocation.");
@@ -160,6 +165,7 @@ int main (int argc, char *argv[]) {
 	globalArgs.batch_size = NULL;
 	globalArgs.ip = NULL;
 	globalArgs.port = NULL;
+	globalArgs.search_string = NULL;
 	globalArgs.verbose = 0;
 	globalArgs.inputFiles = NULL;
 	globalArgs.numInputFiles = 0;
@@ -182,6 +188,9 @@ int main (int argc, char *argv[]) {
 			case 'p':
 				globalArgs.port = optarg;
 				break;
+			case 's':
+				globalArgs.search_string = optarg;
+				break;
 			case 'v':
 				globalArgs.verbose = 1;
 				break;
@@ -190,8 +199,10 @@ int main (int argc, char *argv[]) {
 				display_usage();
 				break;
 			case 0:	
+				display_usage();
 				break;
 			default:
+				display_usage();
 				break;
 		}
 		
@@ -200,6 +211,7 @@ int main (int argc, char *argv[]) {
 	
 	globalArgs.inputFiles = argv + optind;
 	globalArgs.numInputFiles = argc - optind;
+        if(globalArgs.numInputFiles <= 0) display_usage();
 	chop();
         return(0);
 }
