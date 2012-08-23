@@ -36,7 +36,6 @@
 #define  MAX_METHOD          7 
 #define  MAX_URI          2083 //Safe limit?
 #define  MAX_PROTO           8
-#define  MAX_RESP_CODE       3
 #define  MAX_RESP_BYTES     20 
 #define  MAX_REFERER      2083 //Safe limit?
 #define  MAX_AGENT        1024 //Safe limit?
@@ -50,7 +49,7 @@ typedef struct {
 	char req_method[MAX_METHOD];
 	char req_uri[MAX_LINE_LENGTH];
 	char req_proto[MAX_PROTO];
-	char resp_code[MAX_RESP_CODE];
+	int  resp_code;
 	char resp_bytes[MAX_RESP_BYTES];
 	char req_referer[MAX_REFERER];
 	char req_agent[MAX_AGENT];
@@ -94,13 +93,7 @@ int flush_to_disk( FILE *fp, st_http_request *p, int counter )
 	printf( "flushing %d lines to disk\n",counter );
         int flush_count;
         for ( flush_count = 0; flush_count <= counter; flush_count++) {
-          fprintf(fp, "%s %s %s %s %s %s %s %s %s %s %s\n", \
-            p[flush_count].req_ip, p[flush_count].req_ident, \
-            p[flush_count].req_user, p[flush_count].req_datetime, \
-            p[flush_count].req_method, p[flush_count].req_uri, \
-            p[flush_count].req_proto, \
-            p[flush_count].resp_code, p[flush_count].resp_bytes, \
-            p[flush_count].req_referer, p[flush_count].req_agent);
+          fprintf(fp, "%s %d %s\n", p[flush_count].req_uri, p[flush_count].resp_code, p[flush_count].resp_bytes);
    }
 
         return(0);
@@ -146,14 +139,15 @@ int chop( void )
 	  exit(1);
 	} else {
           if ((globalArgs.search_string != NULL) && (strstr(log_line,globalArgs.search_string) == NULL )) continue;
-	  sscanf(log_line, "%s %s %s [%[^]]] \"%s %s %[^\"]\" %s %s \"%[^\"]\" \"%[^\"]\"", \
+          //Only allow valid responses or scan differently - EOF is just the start
+          if (strstr(log_line,"\"EOF\"")) continue;
+	  sscanf(log_line, "%s %s %s [%[^]]] \"%s %s %[^\"]\" %d %s \"%[^\"]\" \"%[^\"]\"", \
 	    p[counter].req_ip, p[counter].req_ident, \
 	    p[counter].req_user, p[counter].req_datetime, \
 	    p[counter].req_method, p[counter].req_uri, \
 	    p[counter].req_proto, \
-	    p[counter].resp_code, p[counter].resp_bytes, \
+	    &p[counter].resp_code, p[counter].resp_bytes, \
 	    p[counter].req_referer, p[counter].req_agent);
-          //If req_uri 
 	  tmp = (st_http_request *) realloc ( p, (counter+2) * sizeof(st_http_request) );
 	  if (tmp == NULL) { 
 	    printf("Failed to increase memory allocation.");
