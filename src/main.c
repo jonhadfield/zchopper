@@ -119,8 +119,8 @@ int chop( void )
     for (f_count = 0; f_count < globalArgs.numInputFiles; f_count++) {
       printf("File %d: %s\n",f_count,globalArgs.inputFiles[f_count]);
       pRead = fopen(globalArgs.inputFiles[f_count], "r");
-      st_http_request *p,*tmp;
-      p = (st_http_request *)malloc(sizeof(st_http_request)*2);
+      st_http_request *p;
+      p = (st_http_request *)malloc(sizeof(st_http_request)*BATCH_SIZE);
       char log_line[MAX_LINE_LENGTH];
       //memset(&log_line[0], 0, sizeof(log_line));
       int counter = 0;
@@ -148,13 +148,6 @@ int chop( void )
 	    p[counter].req_proto, \
 	    &p[counter].resp_code, p[counter].resp_bytes, \
 	    p[counter].req_referer, p[counter].req_agent);
-	  tmp = (st_http_request *) realloc ( p, (counter+2) * sizeof(st_http_request) );
-	  if (tmp == NULL) { 
-	    printf("Failed to increase memory allocation.");
-	    exit(1);
-	  } else {
-	    p = tmp; 
-	  }
 	  running_total++;
 	}
 	if (counter == (use_batch_size-1)) {
