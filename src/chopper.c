@@ -6,10 +6,10 @@
 #include "chopper.h"
 
 const char chopper_usage_string[] =
-	"chopper [-s|--search_string] [-o|--outfile <path>] [-t|--type] [-b|--batchsize <value>] [-i|--ip <value>]\n"
-	"           [-p|--port <value>|-s|--search_string <value>] [-v|--verbose]\n"
-	"           [-v|--verbose] [-h|--help]\n"
-	"           <command> [<args>]";
+    "chopper [-s|--search_string] [-o|--outfile <path>] [-t|--type] [-b|--batchsize <value>] [-i|--ip <value>]\n"
+    "           [-p|--port <value>|-s|--search_string <value>] [-v|--verbose]\n"
+    "           [-v|--verbose] [-h|--help]\n"
+    "           <command> [<args>]";
 
 typedef struct {
     char req_ip[MAX_IP];
@@ -58,7 +58,7 @@ void display_usage(void)
     exit(EXIT_FAILURE);
 }
 
-int flush_to_disk( st_http_request * p, int counter)
+int flush_to_disk(st_http_request * p, int counter)
 {
     FILE *pWrite;
     pWrite = fopen(globalArgs.outFileName, "a+");
@@ -71,25 +71,27 @@ int flush_to_disk( st_http_request * p, int counter)
     fclose(pWrite);
     return (0);
 }
-int flush_to_mongo( st_http_request *p, int counter)
+
+int flush_to_mongo(st_http_request * p, int counter)
 {
     int flush_count;
     for (flush_count = 0; flush_count < counter; flush_count++) {
-       printf("flush_count: %d\n",flush_count);
-    }
-    return (0);
-}
-int flush_to_stdout( st_http_request *p, int counter)
-{
-    int flush_count;
-    for (flush_count = 0; flush_count < counter; flush_count++) {
-	printf("%s %d %s\n", p[flush_count].req_uri,
-		p[flush_count].resp_code, p[flush_count].resp_bytes);
+	printf("flush_count: %d\n", flush_count);
     }
     return (0);
 }
 
-int chop( void )
+int flush_to_stdout(st_http_request * p, int counter)
+{
+    int flush_count;
+    for (flush_count = 0; flush_count < counter; flush_count++) {
+	printf("%s %d %s\n", p[flush_count].req_uri,
+	       p[flush_count].resp_code, p[flush_count].resp_bytes);
+    }
+    return (0);
+}
+
+int chop(void)
 {
     printf("outFileName: %s\n", globalArgs.outFileName);
     printf("type: %s\n", globalArgs.type);
@@ -105,7 +107,8 @@ int chop( void )
 
     int f_count;
     st_http_request *p;
-    p = (st_http_request *) calloc(BATCH_SIZE,sizeof(st_http_request));
+    p = (st_http_request *) calloc(BATCH_SIZE, sizeof(st_http_request));
+    printf("Size of st_http_request: %lu\n", sizeof(st_http_request));
     for (f_count = 0; f_count < globalArgs.numInputFiles; f_count++) {
 	printf("File %d: %s\n", f_count, globalArgs.inputFiles[f_count]);
 	pRead = fopen(globalArgs.inputFiles[f_count], "r");
@@ -160,12 +163,12 @@ int chop( void )
 	    flush_to_mongo(p, counter);
 	if (globalArgs.outFileName == NULL)
 	    flush_to_stdout(p, counter);
-        
+
 	printf("Scanned a total of: %d lines.\n", running_total);
-        
+
 	fclose(pRead);
     }
-     free(p);
+    free(p);
 //if (globalArgs.outFileName != NULL)
     return (0);
 }
