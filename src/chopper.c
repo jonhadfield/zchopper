@@ -70,6 +70,14 @@ int flush_to_disk( st_http_request * p, int counter)
     }
     return (0);
 }
+int flush_to_mongo( st_http_request * p, int counter)
+{
+    int flush_count;
+    for (flush_count = 0; flush_count < counter; flush_count++) {
+       printf("flush_count: %d\n",flush_count);
+    }
+    return (0);
+}
 int flush_to_stdout( st_http_request * p, int counter)
 {
     int flush_count;
@@ -146,6 +154,8 @@ int chop( void )
 	}
 	if (globalArgs.outFileName != NULL)
 	    flush_to_disk(p, counter);
+	if (globalArgs.ip != NULL && globalArgs.port != NULL)
+	    flush_to_mongo(p, counter);
 	if (globalArgs.outFileName == NULL)
 	    flush_to_stdout(p, counter);
         
