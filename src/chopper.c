@@ -62,15 +62,16 @@ int flush_to_disk( st_http_request * p, int counter)
 {
     FILE *pWrite;
     pWrite = fopen(globalArgs.outFileName, "a+");
-    printf("flushing %d lines to disk\n", counter);
+    //printf("flushing %d lines to disk\n", counter+1);
     int flush_count;
     for (flush_count = 0; flush_count < counter; flush_count++) {
 	fprintf(pWrite, "%s %d %s\n", p[flush_count].req_uri,
 		p[flush_count].resp_code, p[flush_count].resp_bytes);
     }
+    fclose(pWrite);
     return (0);
 }
-int flush_to_mongo( st_http_request * p, int counter)
+int flush_to_mongo( st_http_request *p, int counter)
 {
     int flush_count;
     for (flush_count = 0; flush_count < counter; flush_count++) {
@@ -78,7 +79,7 @@ int flush_to_mongo( st_http_request * p, int counter)
     }
     return (0);
 }
-int flush_to_stdout( st_http_request * p, int counter)
+int flush_to_stdout( st_http_request *p, int counter)
 {
     int flush_count;
     for (flush_count = 0; flush_count < counter; flush_count++) {
@@ -103,14 +104,12 @@ int chop( void )
     int running_total = 0;
 
     int f_count;
+    st_http_request *p;
+    p = (st_http_request *) calloc(BATCH_SIZE,sizeof(st_http_request));
     for (f_count = 0; f_count < globalArgs.numInputFiles; f_count++) {
 	printf("File %d: %s\n", f_count, globalArgs.inputFiles[f_count]);
 	pRead = fopen(globalArgs.inputFiles[f_count], "r");
-	st_http_request *p;
-	p = (st_http_request *) malloc(sizeof(st_http_request) *
-				       BATCH_SIZE);
 	char log_line[MAX_LINE_LENGTH];
-	//memset(&log_line[0], 0, sizeof(log_line));
 	int counter = 0;
 	int line_length = 0;
 	int use_batch_size;
@@ -131,7 +130,6 @@ int chop( void )
 		    && (strstr(log_line, globalArgs.search_string) ==
 			NULL))
 		    continue;
-		//Only allow valid responses or scan differently - EOF is just the start
 		if (strstr(log_line, "\"EOF\""))
 		    continue;
 		sscanf(log_line,
@@ -160,9 +158,10 @@ int chop( void )
 	    flush_to_stdout(p, counter);
         
 	printf("Scanned a total of: %d lines.\n", running_total);
+        
 	fclose(pRead);
-	free(p);
     }
+     free(p);
 //if (globalArgs.outFileName != NULL)
     return (0);
 }
