@@ -145,6 +145,10 @@ int chop( void )
 	    if (counter == (use_batch_size - 1)) {
 		if (globalArgs.outFileName != NULL)
 		    flush_to_disk(p, counter);
+		if (globalArgs.ip != NULL && globalArgs.port != NULL)
+		    flush_to_mongo(p, counter);
+		if (globalArgs.outFileName == NULL)
+		    flush_to_stdout(p, counter);
 		counter = 0;
 	    } else {
 		counter++;
