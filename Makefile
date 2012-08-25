@@ -1,6 +1,6 @@
 P=chopper
 OBJECTS=
-CFLAGS=-g -O3 -Wall
+CFLAGS=-g -static-libgcc -Wall
 LDLIBS=
 CC=gcc
 
