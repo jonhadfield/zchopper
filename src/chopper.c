@@ -142,7 +142,7 @@ int chop( void )
 		       p[counter].req_agent);
 		running_total++;
 	    }
-	    if (counter == (use_batch_size - 1)) {
+	    if (counter == (use_batch_size)) {
 		if (globalArgs.outFileName != NULL)
 		    flush_to_disk(p, counter);
 		if (globalArgs.ip != NULL && globalArgs.port != NULL)
