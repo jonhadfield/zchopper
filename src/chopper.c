@@ -3,6 +3,7 @@
 #include <unistd.h>
 #include <getopt.h>
 #include <string.h>
+#include "mongo.h"
 #include "chopper.h"
 
 const char chopper_usage_string[] =
@@ -74,10 +75,53 @@ int flush_to_disk(st_http_request * p, int counter)
 
 int flush_to_mongo(st_http_request * p, int counter)
 {
+
     int flush_count;
-    for (flush_count = 0; flush_count < counter; flush_count++) {
-	printf("flush_count: %d\n", flush_count);
+    bson b;
+    mongo conn;
+
+    /* Now make a connection to MongoDB. */
+    if( mongo_connect( &conn, "127.0.0.1", 27017 ) != MONGO_OK ) {
+      switch( conn.err ) {
+        case MONGO_CONN_NO_SOCKET:
+          printf( "FAIL: Could not create a socket!\n" );
+          break;
+        case MONGO_CONN_FAIL:
+          printf( "FAIL: Could not connect to mongod. Make sure it's listening at 127.0.0.1:27017.\n" );
+          break;
+      }
+
+      exit( 1 );
     }
+
+    for (flush_count = 0; flush_count < counter; flush_count++) {
+
+    bson_init( &b );
+    bson_append_new_oid( &b, "_id" );
+    bson_append_new_oid( &b, "user_id" );
+    bson_append_start_array( &b, "log_entries" );
+
+    bson_append_start_object( &b, "0" );
+    bson_append_string( &b, "req_uri", p[flush_count].req_uri );
+    bson_append_int( &b, "resp_bytes", atoi(p[flush_count].resp_bytes) );
+    bson_append_finish_object( &b );
+
+    bson_append_start_object( &b, "0" );
+    bson_append_string( &b, "req_uri", p[flush_count].req_uri );
+    bson_append_int( &b, "resp_bytes", atoi(p[flush_count].resp_bytes) );
+    bson_append_finish_object( &b );
+
+    bson_append_finish_object( &b );
+
+    bson_finish( &b );
+    //bson_print( &b );
+    if( mongo_insert( &conn, "test.records", &b, NULL ) != MONGO_OK ) {
+      printf( "FAIL: Failed to insert document with error %d\n", conn.err );
+      exit( 1 );
+    }
+    bson_destroy( &b );
+    }
+    mongo_destroy( &conn );
     return (0);
 }
 
@@ -150,7 +194,7 @@ int chop(void)
 		    flush_to_disk(p, counter);
 		if (globalArgs.ip != NULL && globalArgs.port != NULL)
 		    flush_to_mongo(p, counter);
-		if (globalArgs.outFileName == NULL)
+		if (globalArgs.outFileName == NULL && globalArgs.ip == NULL && globalArgs.port == NULL)
 		    flush_to_stdout(p, counter);
 		counter = 0;
 	    } else {
@@ -161,7 +205,7 @@ int chop(void)
 	    flush_to_disk(p, counter);
 	if (globalArgs.ip != NULL && globalArgs.port != NULL)
 	    flush_to_mongo(p, counter);
-	if (globalArgs.outFileName == NULL)
+	if (globalArgs.outFileName == NULL && globalArgs.ip == NULL && globalArgs.port == NULL)
 	    flush_to_stdout(p, counter);
 
 	printf("Scanned a total of: %d lines.\n", running_total);
@@ -169,7 +213,6 @@ int chop(void)
 	fclose(pRead);
     }
     free(p);
-//if (globalArgs.outFileName != NULL)
     return (0);
 }
 
