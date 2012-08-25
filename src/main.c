@@ -41,6 +41,12 @@
 #define  MAX_AGENT        1024	//Safe limit?
 #define  BATCH_SIZE       1000
 
+const char chopper_usage_string[] =
+	"chopper [-s|--search_string] [-o|--outfile <path>] [-t|--type] [-b|--batchsize <value>] [-i|--ip <value>]\n"
+	"           [-p|--port <value>|-s|--search_string <value>] [-v|--verbose]\n"
+	"           [-v|--verbose] [-h|--help]\n"
+	"           <command> [<args>]";
+
 typedef struct {
     char req_ip[MAX_IP];
     char req_ident[MAX_IDENT];
@@ -84,7 +90,7 @@ static const struct option longOpts[] = {
 
 void display_usage(void)
 {
-    puts("chopper - reads apache logs and outputs to file or db");
+    puts(chopper_usage_string);
     exit(EXIT_FAILURE);
 }
 
