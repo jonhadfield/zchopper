@@ -1,5 +1,5 @@
 OBJECTS=ext/mongo/lib/libmongoc.a
-CFLAGS=-static-libgcc -O2 -Wall --std=c99 
+CFLAGS=-static-libgcc -O2 -Wall --std=c99 -lz -lmongoc
 LDFLAGS=
 LDLIBS=
 CC=gcc
