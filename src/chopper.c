@@ -1,3 +1,4 @@
+#include <zlib.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -146,7 +147,7 @@ int chop(void)
     printf("verbose: %d\n", globalArgs.verbose);
     printf("numInputFiles: %d\n", globalArgs.numInputFiles);
 
-    FILE *pRead;
+    //FILE *pRead;
     int running_total = 0;
 
     int f_count;
@@ -155,7 +156,7 @@ int chop(void)
     printf("Size of st_http_request: %lu\n", sizeof(st_http_request));
     for (f_count = 0; f_count < globalArgs.numInputFiles; f_count++) {
 	printf("File %d: %s\n", f_count, globalArgs.inputFiles[f_count]);
-	pRead = fopen(globalArgs.inputFiles[f_count], "r");
+	gzFile pRead = gzopen(globalArgs.inputFiles[f_count], "r");
 	char log_line[MAX_LINE_LENGTH];
 	int counter = 0;
 	int line_length = 0;
@@ -166,7 +167,7 @@ int chop(void)
 	    use_batch_size = BATCH_SIZE;
 	}
 
-	while (fgets(log_line, 8192, pRead) != NULL) {
+	while (gzgets(pRead,log_line,8192) != NULL) {
 	    line_length = strlen(log_line);
 	    if (line_length > MAX_LINE_LENGTH - 1) {
 		printf
@@ -209,8 +210,8 @@ int chop(void)
 	    flush_to_stdout(p, counter);
 
 	printf("Scanned a total of: %d lines.\n", running_total);
+        gzclose(pRead);
 
-	fclose(pRead);
     }
     free(p);
     return (0);
