@@ -84,11 +84,55 @@ int flush_to_mongo(st_http_request * p, int counter)
     /* Now make a connection to MongoDB. */
     if( mongo_connect( &conn, globalArgs.ip, atoi(globalArgs.port) ) != MONGO_OK ) {
       switch( conn.err ) {
+        case MONGO_CONN_SUCCESS:
+          printf("Connected to mongo\n"); 
         case MONGO_CONN_NO_SOCKET:
           printf( "FAIL: Could not create a socket!\n" );
           break;
+        case MONGO_CONN_ADDR_FAIL:
+          printf( "FAIL: MONGO_CONN_ADDR_FAIL: %s\n",globalArgs.ip);
+          break;
+        case MONGO_CONN_NOT_MASTER:
+          printf( "FAIL: MONGO_CONN_NOT_MASTER\n");
+          break;
+        case MONGO_CONN_BAD_SET_NAME:
+          printf( "FAIL: MONGO_CONN_BAD_SET_NAME\n");
+          break;
+        case MONGO_CONN_NO_PRIMARY:
+          printf( "FAIL: MONGO_CONN_NO_PRIMARY\n");
+          break;
+        case MONGO_IO_ERROR:
+          printf( "FAIL: MONGO_IO_ERROR\n");
+          break;
+        case MONGO_SOCKET_ERROR:
+          printf( "FAIL: MONGO_SOCKET_ERROR\n");
+          break;
+        case MONGO_READ_SIZE_ERROR:
+          printf( "FAIL: MONGO_READ_SIZE_ERROR\n");
+          break;
+        case MONGO_COMMAND_FAILED:
+          printf( "FAIL: MONGO_COMMAND_FAILED\n");
+          break;
+        case MONGO_WRITE_ERROR:
+          printf( "FAIL: MONGO_WRITE_ERROR\n");
+          break;
+        case MONGO_NS_INVALID:
+          printf( "FAIL: MONGO_NS_INVALID\n");
+          break;
+        case MONGO_BSON_INVALID:
+          printf( "FAIL: MONGO_BSON_INVALIDr\n");
+          break;
+        case MONGO_BSON_NOT_FINISHED:
+          printf( "FAIL: MONGO_BSON_NOT_FINISHED\n");
+          break;
+        case MONGO_BSON_TOO_LARGE:
+          printf( "FAIL: MONGO_BSON_TOO_LARGEr\n");
+          break;
+        case MONGO_WRITE_CONCERN_INVALID:
+          printf( "FAIL: Mongo write concern invalid\n");
+          break;
         case MONGO_CONN_FAIL:
-          printf( "FAIL: Could not connect to mongod. Make sure it's listening at %s:%s\n",globalArgs.ip,globalArgs.port);
+          printf( "FAIL: Mongo connection fail. Make sure it's listening at %s:%s\n",globalArgs.ip,globalArgs.port);
           break;
       }
 
@@ -116,7 +160,7 @@ int flush_to_mongo(st_http_request * p, int counter)
 
     bson_finish( &b );
     //bson_print( &b );
-    if( mongo_insert( &conn, "test.records", &b, NULL ) != MONGO_OK ) {
+    if( mongo_insert( &conn, "logs.records", &b, NULL ) != MONGO_OK ) {
       printf( "FAIL: Failed to insert document with error %d\n", conn.err );
       exit( 1 );
     }
