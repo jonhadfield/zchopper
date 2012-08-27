@@ -82,13 +82,13 @@ int flush_to_mongo(st_http_request * p, int counter)
     mongo conn;
 
     /* Now make a connection to MongoDB. */
-    if( mongo_connect( &conn, "127.0.0.1", 27017 ) != MONGO_OK ) {
+    if( mongo_connect( &conn, globalArgs.ip, atoi(globalArgs.port) ) != MONGO_OK ) {
       switch( conn.err ) {
         case MONGO_CONN_NO_SOCKET:
           printf( "FAIL: Could not create a socket!\n" );
           break;
         case MONGO_CONN_FAIL:
-          printf( "FAIL: Could not connect to mongod. Make sure it's listening at 127.0.0.1:27017.\n" );
+          printf( "FAIL: Could not connect to mongod. Make sure it's listening at %s:%s\n",globalArgs.ip,globalArgs.port);
           break;
       }
 
