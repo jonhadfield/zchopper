@@ -8,8 +8,8 @@
 #include "chopper.h"
 
 const char chopper_usage_string[] =
-    "chopper [-s|--search_string] [-o|--outfile <path>] [-t|--type] [-b|--batchsize <value>] [-i|--ip <value>]\n"
-    "           [-p|--port <value>|-s|--search_string <value>] [-v|--verbose]\n"
+    "chopper [-s|--search_string] [-o|--outfile <path>] [-t|--type] [-b|--batchsize <value>] [-h|--host <value>]\n"
+    "           [-p|--port <value>] [-c|--collection <value>][-s|--search_string <value>] [-v|--verbose]\n"
     "           [-v|--verbose] [-h|--help]\n"
     "           <command> [<args>]";
 
@@ -160,37 +160,12 @@ int flush_to_mongo(st_http_request * p, int counter)
   //bson_destroy ( bp );
   //free (bps);
 
-  mongo_insert_batch( &conn, "tutorial.persons", (const bson **)bps, counter, NULL,0); 
+  mongo_insert_batch( &conn, "weblogs.portal", (const bson **)bps, counter, NULL,0); 
   int j = 0;
   for ( j = 0; j < counter; j++ ) {
     bson_finish( bps[j] );
   }
   mongo_destroy( &conn );
-    /*for (flush_count = 0; flush_count < counter; flush_count++) {
-    bson_init( &b );
-    bson_append_string( &b, "req_ip", p[flush_count].req_ip );
-    bson_append_string( &b, "req_ident", p[flush_count].req_ident );
-    bson_append_string( &b, "req_user", p[flush_count].req_user );
-    bson_append_string( &b, "req_datetime", p[flush_count].req_datetime );
-    bson_append_string( &b, "req_method", p[flush_count].req_method );
-    bson_append_string( &b, "req_uri", p[flush_count].req_uri );
-    bson_append_string( &b, "req_proto", p[flush_count].req_proto );
-    bson_append_int( &b, "resp_code", p[flush_count].resp_code );
-    bson_append_int( &b, "resp_bytes", atoi(p[flush_count].resp_bytes) );
-    bson_append_string( &b, "req_referer", p[flush_count].req_referer );
-    bson_append_string( &b, "req_agent", p[flush_count].req_agent );
-    bson_append_finish_object( &b );
-
-    bson_finish( &b );
-    //bson_print( &b );
-    if( mongo_insert( &conn, "logs.records", &b, NULL ) != MONGO_OK ) {
-      printf( "FAIL: Failed to insert document with error %d\n", conn.err );
-      exit( 1 );
-    }
-    bson_destroy( &b );
-    }
-    mongo_destroy( &conn );
-    */
     return (0);
 }
 
@@ -215,7 +190,6 @@ int chop(void)
     printf("verbose: %d\n", globalArgs.verbose);
     printf("numInputFiles: %d\n", globalArgs.numInputFiles);
 
-    //FILE *pRead;
     int running_total = 0;
 
     int f_count;
@@ -223,7 +197,6 @@ int chop(void)
     p = (st_http_request *) calloc(BATCH_SIZE, sizeof(st_http_request));
     printf("Size of st_http_request: %lu\n", sizeof(st_http_request));
     for (f_count = 0; f_count < globalArgs.numInputFiles; f_count++) {
-	//printf("Scanning file: %s \t", globalArgs.inputFiles[f_count]);
 	gzFile pRead = gzopen(globalArgs.inputFiles[f_count], "r");
 	char log_line[MAX_LINE_LENGTH];
 	int counter = 0;
@@ -257,9 +230,6 @@ int chop(void)
 		       p[counter].resp_bytes, p[counter].req_referer,
 		       p[counter].req_agent);
 		running_total++;
-                //printf("req_ip: %sX\n",p[counter].req_ip);
-                //printf("req_datetime: %sX\n",p[counter].req_datetime);
-                //printf("req_method: %sX\n",p[counter].req_method);
 	    }
 	    if (counter == (use_batch_size)) {
 		if (globalArgs.outFileName != NULL)
