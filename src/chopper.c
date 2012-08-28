@@ -142,20 +142,28 @@ int flush_to_mongo(st_http_request * p, int counter)
     for (flush_count = 0; flush_count < counter; flush_count++) {
 
     bson_init( &b );
-    bson_append_new_oid( &b, "_id" );
-    bson_append_new_oid( &b, "user_id" );
-    bson_append_start_array( &b, "log_entries" );
-
-    bson_append_start_object( &b, "0" );
+    //printf("req_ip: %s\n",p[flush_count].req_ip);
+    //printf("req_ident: %s\n",p[flush_count].req_ident);
+    //printf("req_user: %s\n",p[flush_count].req_user);
+    //printf("req_datetime: %s\n",p[flush_count].req_datetime);
+    //printf("req_method: %s\n",p[flush_count].req_method);
+    //printf("req_uri: %s\n",p[flush_count].req_uri);
+    //printf("req_proto: %s\n",p[flush_count].req_proto);
+    //printf("resp_code: %d\n",p[flush_count].resp_code);
+    //printf("resp_bytes: %s\n",p[flush_count].resp_bytes);
+    //printf("req_referer: %s\n",p[flush_count].req_referer);
+    //printf("req_agent: %s\n",p[flush_count].req_agent);
+    bson_append_string( &b, "req_ip", p[flush_count].req_ip );
+    bson_append_string( &b, "req_ident", p[flush_count].req_ident );
+    bson_append_string( &b, "req_user", p[flush_count].req_user );
+    bson_append_string( &b, "req_datetime", p[flush_count].req_datetime );
+    bson_append_string( &b, "req_method", p[flush_count].req_method );
     bson_append_string( &b, "req_uri", p[flush_count].req_uri );
+    bson_append_string( &b, "req_proto", p[flush_count].req_proto );
+    bson_append_int( &b, "resp_code", p[flush_count].resp_code );
     bson_append_int( &b, "resp_bytes", atoi(p[flush_count].resp_bytes) );
-    bson_append_finish_object( &b );
-
-    bson_append_start_object( &b, "0" );
-    bson_append_string( &b, "req_uri", p[flush_count].req_uri );
-    bson_append_int( &b, "resp_bytes", atoi(p[flush_count].resp_bytes) );
-    bson_append_finish_object( &b );
-
+    bson_append_string( &b, "req_referer", p[flush_count].req_referer );
+    bson_append_string( &b, "req_agent", p[flush_count].req_agent );
     bson_append_finish_object( &b );
 
     bson_finish( &b );
@@ -199,7 +207,7 @@ int chop(void)
     p = (st_http_request *) calloc(BATCH_SIZE, sizeof(st_http_request));
     printf("Size of st_http_request: %lu\n", sizeof(st_http_request));
     for (f_count = 0; f_count < globalArgs.numInputFiles; f_count++) {
-	printf("File %d: %s\n", f_count, globalArgs.inputFiles[f_count]);
+	//printf("Scanning file: %s \t", globalArgs.inputFiles[f_count]);
 	gzFile pRead = gzopen(globalArgs.inputFiles[f_count], "r");
 	char log_line[MAX_LINE_LENGTH];
 	int counter = 0;
@@ -233,6 +241,9 @@ int chop(void)
 		       p[counter].resp_bytes, p[counter].req_referer,
 		       p[counter].req_agent);
 		running_total++;
+                //printf("req_ip: %sX\n",p[counter].req_ip);
+                //printf("req_datetime: %sX\n",p[counter].req_datetime);
+                //printf("req_method: %sX\n",p[counter].req_method);
 	    }
 	    if (counter == (use_batch_size)) {
 		if (globalArgs.outFileName != NULL)
@@ -253,10 +264,11 @@ int chop(void)
 	if (globalArgs.outFileName == NULL && globalArgs.ip == NULL && globalArgs.port == NULL)
 	    flush_to_stdout(p, counter);
 
-	printf("Scanned a total of: %d lines.\n", running_total);
+        printf("Scanned a total of: %d lines.\n", running_total);
         gzclose(pRead);
 
     }
+    
     free(p);
     return (0);
 }
