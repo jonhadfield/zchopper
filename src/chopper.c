@@ -77,11 +77,7 @@ int flush_to_disk(st_http_request * p, int counter)
 int flush_to_mongo(st_http_request * p, int counter)
 {
 
-    int flush_count;
-    bson b;
     mongo conn;
-
-    /* Now make a connection to MongoDB. */
     if( mongo_connect( &conn, globalArgs.ip, atoi(globalArgs.port) ) != MONGO_OK ) {
       switch( conn.err ) {
         case MONGO_CONN_SUCCESS:
@@ -139,20 +135,39 @@ int flush_to_mongo(st_http_request * p, int counter)
       exit( 1 );
     }
 
-    for (flush_count = 0; flush_count < counter; flush_count++) {
+  bson *bp;
+  bson **bps;
+  bps = (bson **)malloc( sizeof( bson * ) * counter);
+  int i = 0;
+  bp = ( bson * )malloc( sizeof( bson ) );
+  for ( i = 0; i < counter; i++ ) {
+    bson_init( bp );
+    bson_append_new_oid( bp, "_id" );
+    bson_append_string( bp, "req_ip", p[i].req_ip );
+    bson_append_string( bp, "req_ident", p[i].req_ident );
+    bson_append_string( bp, "req_user", p[i].req_user );
+    bson_append_string( bp, "req_datetime", p[i].req_datetime );
+    bson_append_string( bp, "req_method", p[i].req_method );
+    bson_append_string( bp, "req_uri", p[i].req_uri );
+    bson_append_string( bp, "req_proto", p[i].req_proto );
+    bson_append_int( bp, "resp_code", p[i].resp_code );
+    bson_append_int( bp, "resp_bytes", atoi(p[i].resp_bytes) );
+    bson_append_string( bp, "req_referer", p[i].req_referer );
+    bson_append_string( bp, "req_agent", p[i].req_agent );
+    bps[i] = bp;
+    bson_finish( bp );
+  }
+  //bson_destroy ( bp );
+  //free (bps);
 
+  mongo_insert_batch( &conn, "tutorial.persons", (const bson **)bps, counter, NULL,0); 
+  int j = 0;
+  for ( j = 0; j < counter; j++ ) {
+    bson_finish( bps[j] );
+  }
+  mongo_destroy( &conn );
+    /*for (flush_count = 0; flush_count < counter; flush_count++) {
     bson_init( &b );
-    //printf("req_ip: %s\n",p[flush_count].req_ip);
-    //printf("req_ident: %s\n",p[flush_count].req_ident);
-    //printf("req_user: %s\n",p[flush_count].req_user);
-    //printf("req_datetime: %s\n",p[flush_count].req_datetime);
-    //printf("req_method: %s\n",p[flush_count].req_method);
-    //printf("req_uri: %s\n",p[flush_count].req_uri);
-    //printf("req_proto: %s\n",p[flush_count].req_proto);
-    //printf("resp_code: %d\n",p[flush_count].resp_code);
-    //printf("resp_bytes: %s\n",p[flush_count].resp_bytes);
-    //printf("req_referer: %s\n",p[flush_count].req_referer);
-    //printf("req_agent: %s\n",p[flush_count].req_agent);
     bson_append_string( &b, "req_ip", p[flush_count].req_ip );
     bson_append_string( &b, "req_ident", p[flush_count].req_ident );
     bson_append_string( &b, "req_user", p[flush_count].req_user );
@@ -175,6 +190,7 @@ int flush_to_mongo(st_http_request * p, int counter)
     bson_destroy( &b );
     }
     mongo_destroy( &conn );
+    */
     return (0);
 }
 
