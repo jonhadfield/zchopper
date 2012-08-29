@@ -16,8 +16,9 @@
 * -o outfile name - write to file rather than stdout
 * -t output type
 * -b batch size - number of lines to process before flushing - debug only
-* -i ip of db server
+* -h db host
 * -p port of db server
+* -c mongo db and collection
 * -s search string
 * -v verbose output
 * additional file names are used as input files
@@ -28,8 +29,9 @@
 * --outfile
 * --type
 * --batchsize
-* --ip
+* --host
 * --port
+* --collection
 * --search_string
 * --verbose
 *

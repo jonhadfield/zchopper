@@ -9,7 +9,7 @@
 
 const char chopper_usage_string[] =
     "chopper [-s|--search_string] [-o|--outfile <path>] [-t|--type] [-b|--batchsize <value>] [-h|--host <value>]\n"
-    "           [-p|--port <value>] [-c|--collection <value>][-s|--search_string <value>] [-v|--verbose]\n"
+    "           [-p|--port <value>] [-c|--collection <db.collection>][-s|--search_string <value>] [-v|--verbose]\n"
     "           [-v|--verbose] [-h|--help]\n"
     "           <command> [<args>]";
 
@@ -32,22 +32,24 @@ struct globalArgs_t {
     FILE *outFile;
     char *type;			/* -t option */
     char *batch_size;		/* -b option */
-    char *ip;			/* -i option */
+    char *host;			/* -h option */
     char *port;			/* -p option */
+    char *collection;		/* -c option */
     char *search_string;	/* -s option */
     int verbose;		/* verbosity */
     char **inputFiles;		/* input files */
     int numInputFiles;		/* # of input files */
 } globalArgs;
 
-static const char *optString = "o:t:b:i:p:s:vh?";
+static const char *optString = "o:t:b:h:p:c:s:v?";
 
 static const struct option longOpts[] = {
     {"outFileName", required_argument, NULL, 'o'},
     {"type", required_argument, NULL, 't'},
     {"batch_size", required_argument, NULL, 'b'},
-    {"ip", required_argument, NULL, 'i'},
+    {"host", required_argument, NULL, 'h'},
     {"port", required_argument, NULL, 'p'},
+    {"collection", required_argument, NULL, 'c'},
     {"search_string", required_argument, NULL, 's'},
     {"verbose", no_argument, NULL, 'v'},
     {"help", no_argument, NULL, 'h'},
@@ -78,7 +80,7 @@ int flush_to_mongo(st_http_request * p, int counter)
 {
 
     mongo conn;
-    if( mongo_connect( &conn, globalArgs.ip, atoi(globalArgs.port) ) != MONGO_OK ) {
+    if( mongo_connect( &conn, globalArgs.host, atoi(globalArgs.port) ) != MONGO_OK ) {
       switch( conn.err ) {
         case MONGO_CONN_SUCCESS:
           printf("Connected to mongo\n"); 
@@ -86,7 +88,7 @@ int flush_to_mongo(st_http_request * p, int counter)
           printf( "FAIL: Could not create a socket!\n" );
           break;
         case MONGO_CONN_ADDR_FAIL:
-          printf( "FAIL: MONGO_CONN_ADDR_FAIL: %s\n",globalArgs.ip);
+          printf( "FAIL: MONGO_CONN_ADDR_FAIL: %s\n",globalArgs.host);
           break;
         case MONGO_CONN_NOT_MASTER:
           printf( "FAIL: MONGO_CONN_NOT_MASTER\n");
@@ -128,7 +130,7 @@ int flush_to_mongo(st_http_request * p, int counter)
           printf( "FAIL: Mongo write concern invalid\n");
           break;
         case MONGO_CONN_FAIL:
-          printf( "FAIL: Mongo connection fail. Make sure it's listening at %s:%s\n",globalArgs.ip,globalArgs.port);
+          printf( "FAIL: Mongo connection fail. Make sure it's listening at %s:%s\n",globalArgs.host,globalArgs.port);
           break;
       }
 
@@ -139,7 +141,7 @@ int flush_to_mongo(st_http_request * p, int counter)
   bson **bps;
   bps = (bson **)malloc( sizeof( bson * ) * counter);
   int i = 0;
-  printf("counter = %d\n",counter);
+  //printf("counter = %d\n",counter);
   for ( i = 0; i < counter; i++ ) {
     bp = ( bson * )malloc( sizeof( bson ) );
     bson_init( bp );
@@ -164,7 +166,7 @@ int flush_to_mongo(st_http_request * p, int counter)
   //bson_destroy ( bp );
   //free (bps);
 
-  mongo_insert_batch( &conn, "weblogs.portal", (const bson **)bps, counter, NULL,0); 
+  mongo_insert_batch( &conn, globalArgs.collection, (const bson **)bps, counter, NULL,0); 
   int j = 0;
   for ( j = 0; j < counter; j++ ) {
     bson_finish( bps[j] );
@@ -188,8 +190,9 @@ int chop(void)
     printf("outFileName: %s\n", globalArgs.outFileName);
     printf("type: %s\n", globalArgs.type);
     printf("batch_size: %s\n", globalArgs.batch_size);
-    printf("ip: %s\n", globalArgs.ip);
+    printf("host: %s\n", globalArgs.host);
     printf("port: %s\n", globalArgs.port);
+    printf("collection: %s\n", globalArgs.collection);
     printf("search_string: %s\n", globalArgs.search_string);
     printf("verbose: %d\n", globalArgs.verbose);
     printf("numInputFiles: %d\n", globalArgs.numInputFiles);
@@ -238,9 +241,9 @@ int chop(void)
 	    if (counter == (use_batch_size)) {
 		if (globalArgs.outFileName != NULL)
 		    flush_to_disk(p, counter);
-		if (globalArgs.ip != NULL && globalArgs.port != NULL)
+		if (globalArgs.host != NULL && globalArgs.port != NULL && globalArgs.collection != NULL)
 		    flush_to_mongo(p, counter);
-		if (globalArgs.outFileName == NULL && globalArgs.ip == NULL && globalArgs.port == NULL)
+		if (globalArgs.outFileName == NULL && globalArgs.host == NULL && globalArgs.port == NULL)
 		    flush_to_stdout(p, counter);
 		counter = 0;
 	    } else {
@@ -249,9 +252,9 @@ int chop(void)
 	}
 	if (globalArgs.outFileName != NULL)
 	    flush_to_disk(p, counter);
-	if (globalArgs.ip != NULL && globalArgs.port != NULL)
+	if (globalArgs.host != NULL && globalArgs.port != NULL && globalArgs.collection != NULL)
 	    flush_to_mongo(p, counter);
-	if (globalArgs.outFileName == NULL && globalArgs.ip == NULL && globalArgs.port == NULL)
+	if (globalArgs.outFileName == NULL && globalArgs.host == NULL && globalArgs.port == NULL)
 	    flush_to_stdout(p, counter);
 
         printf("Scanned a total of: %d lines.\n", running_total);
@@ -271,8 +274,9 @@ int main(int argc, char *argv[])
     globalArgs.outFile = NULL;
     globalArgs.type = NULL;
     globalArgs.batch_size = NULL;
-    globalArgs.ip = NULL;
+    globalArgs.host = NULL;
     globalArgs.port = NULL;
+    globalArgs.collection = NULL;
     globalArgs.search_string = NULL;
     globalArgs.verbose = 0;
     globalArgs.inputFiles = NULL;
@@ -290,11 +294,14 @@ int main(int argc, char *argv[])
 	case 'b':
 	    globalArgs.batch_size = optarg;
 	    break;
-	case 'i':
-	    globalArgs.ip = optarg;
+	case 'h':
+	    globalArgs.host = optarg;
 	    break;
 	case 'p':
 	    globalArgs.port = optarg;
+	    break;
+	case 'c':
+	    globalArgs.collection = optarg;
 	    break;
 	case 's':
 	    globalArgs.search_string = optarg;
@@ -302,7 +309,6 @@ int main(int argc, char *argv[])
 	case 'v':
 	    globalArgs.verbose = 1;
 	    break;
-	case 'h':
 	case '?':
 	    display_usage();
 	    break;
