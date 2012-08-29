@@ -158,7 +158,7 @@ int flush_to_mongo(st_http_request * p, int counter)
     bson_finish( bp );
     bps[i] = bp;
     //printf("Printing bson object: %d\n",i);
-    bson_print(bp);
+    //bson_print(bp);
     //printf("end-bson-object: %d\n",i);
   }
   //bson_destroy ( bp );
