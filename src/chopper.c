@@ -139,9 +139,9 @@ int flush_to_mongo(st_http_request * p, int counter)
   bson **bps;
   bps = (bson **)malloc( sizeof( bson * ) * counter);
   int i = 0;
-  bp = ( bson * )malloc( sizeof( bson ) );
   printf("counter = %d\n",counter);
   for ( i = 0; i < counter; i++ ) {
+    bp = ( bson * )malloc( sizeof( bson ) );
     bson_init( bp );
     bson_append_new_oid( bp, "_id" );
     bson_append_string( bp, "req_ip", p[i].req_ip );
@@ -157,7 +157,9 @@ int flush_to_mongo(st_http_request * p, int counter)
     bson_append_string( bp, "req_agent", p[i].req_agent );
     bson_finish( bp );
     bps[i] = bp;
+    //printf("Printing bson object: %d\n",i);
     bson_print(bp);
+    //printf("end-bson-object: %d\n",i);
   }
   //bson_destroy ( bp );
   //free (bps);
