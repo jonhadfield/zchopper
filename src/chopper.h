@@ -9,7 +9,7 @@
 #define  MAX_RESP_BYTES     20
 #define  MAX_REFERER      2083  //Safe limit?
 #define  MAX_AGENT        1024  //Safe limit?
-#define  BATCH_SIZE       100
+#define  BATCH_SIZE         50
 
 /* short options:
 *
