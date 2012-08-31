@@ -33,7 +33,7 @@ struct globalArgs_t {
     char *type;			/* -t option */
     char *batch_size;		/* -b option */
     char *host;			/* -h option */
-    int  port;			/* -p option */
+    int port;			/* -p option */
     char *collection;		/* -c option */
     char *search_string;	/* -s option */
     int verbose;		/* verbosity */
@@ -80,98 +80,93 @@ int flush_to_mongo(st_http_request * p, int counter)
 {
 
     mongo conn;
-    if( mongo_connect( &conn, globalArgs.host, globalArgs.port ) != MONGO_OK ) {
-      switch( conn.err ) {
-        case MONGO_CONN_SUCCESS:
-          printf("Connected to mongo\n"); 
-        case MONGO_CONN_NO_SOCKET:
-          printf( "FAIL: Could not create a socket!\n" );
-          break;
-        case MONGO_CONN_ADDR_FAIL:
-          printf( "FAIL: MONGO_CONN_ADDR_FAIL: %s\n",globalArgs.host);
-          break;
-        case MONGO_CONN_NOT_MASTER:
-          printf( "FAIL: MONGO_CONN_NOT_MASTER\n");
-          break;
-        case MONGO_CONN_BAD_SET_NAME:
-          printf( "FAIL: MONGO_CONN_BAD_SET_NAME\n");
-          break;
-        case MONGO_CONN_NO_PRIMARY:
-          printf( "FAIL: MONGO_CONN_NO_PRIMARY\n");
-          break;
-        case MONGO_IO_ERROR:
-          printf( "FAIL: MONGO_IO_ERROR\n");
-          break;
-        case MONGO_SOCKET_ERROR:
-          printf( "FAIL: MONGO_SOCKET_ERROR\n");
-          break;
-        case MONGO_READ_SIZE_ERROR:
-          printf( "FAIL: MONGO_READ_SIZE_ERROR\n");
-          break;
-        case MONGO_COMMAND_FAILED:
-          printf( "FAIL: MONGO_COMMAND_FAILED\n");
-          break;
-        case MONGO_WRITE_ERROR:
-          printf( "FAIL: MONGO_WRITE_ERROR\n");
-          break;
-        case MONGO_NS_INVALID:
-          printf( "FAIL: MONGO_NS_INVALID\n");
-          break;
-        case MONGO_BSON_INVALID:
-          printf( "FAIL: MONGO_BSON_INVALIDr\n");
-          break;
-        case MONGO_BSON_NOT_FINISHED:
-          printf( "FAIL: MONGO_BSON_NOT_FINISHED\n");
-          break;
-        case MONGO_BSON_TOO_LARGE:
-          printf( "FAIL: MONGO_BSON_TOO_LARGEr\n");
-          break;
-        case MONGO_WRITE_CONCERN_INVALID:
-          printf( "FAIL: Mongo write concern invalid\n");
-          break;
-        case MONGO_CONN_FAIL:
-          printf( "FAIL: Mongo connection fail. Make sure it's listening at %s:%d\n",globalArgs.host,globalArgs.port);
-          break;
-      }
+    if (mongo_connect(&conn, globalArgs.host, globalArgs.port) != MONGO_OK) {
+	switch (conn.err) {
+	case MONGO_CONN_SUCCESS:
+	    printf("Connected to mongo\n");
+	case MONGO_CONN_NO_SOCKET:
+	    printf("FAIL: Could not create a socket!\n");
+	    break;
+	case MONGO_CONN_ADDR_FAIL:
+	    printf("FAIL: MONGO_CONN_ADDR_FAIL: %s\n", globalArgs.host);
+	    break;
+	case MONGO_CONN_NOT_MASTER:
+	    printf("FAIL: MONGO_CONN_NOT_MASTER\n");
+	    break;
+	case MONGO_CONN_BAD_SET_NAME:
+	    printf("FAIL: MONGO_CONN_BAD_SET_NAME\n");
+	    break;
+	case MONGO_CONN_NO_PRIMARY:
+	    printf("FAIL: MONGO_CONN_NO_PRIMARY\n");
+	    break;
+	case MONGO_IO_ERROR:
+	    printf("FAIL: MONGO_IO_ERROR\n");
+	    break;
+	case MONGO_SOCKET_ERROR:
+	    printf("FAIL: MONGO_SOCKET_ERROR\n");
+	    break;
+	case MONGO_READ_SIZE_ERROR:
+	    printf("FAIL: MONGO_READ_SIZE_ERROR\n");
+	    break;
+	case MONGO_COMMAND_FAILED:
+	    printf("FAIL: MONGO_COMMAND_FAILED\n");
+	    break;
+	case MONGO_WRITE_ERROR:
+	    printf("FAIL: MONGO_WRITE_ERROR\n");
+	    break;
+	case MONGO_NS_INVALID:
+	    printf("FAIL: MONGO_NS_INVALID\n");
+	    break;
+	case MONGO_BSON_INVALID:
+	    printf("FAIL: MONGO_BSON_INVALIDr\n");
+	    break;
+	case MONGO_BSON_NOT_FINISHED:
+	    printf("FAIL: MONGO_BSON_NOT_FINISHED\n");
+	    break;
+	case MONGO_BSON_TOO_LARGE:
+	    printf("FAIL: MONGO_BSON_TOO_LARGEr\n");
+	    break;
+	case MONGO_WRITE_CONCERN_INVALID:
+	    printf("FAIL: Mongo write concern invalid\n");
+	    break;
+	case MONGO_CONN_FAIL:
+	    printf
+		("FAIL: Mongo connection fail. Make sure it's listening at %s:%d\n",
+		 globalArgs.host, globalArgs.port);
+	    break;
+	}
 
-      exit( 1 );
+	exit(1);
     }
 
-  bson *bp;
-  bson **bps;
-  bps = (bson **)malloc( sizeof( bson * ) * counter);
-  int i = 0;
-  //printf("counter = %d\n",counter);
-  for ( i = 0; i < counter; i++ ) {
-    bp = ( bson * )malloc( sizeof( bson ) );
-    bson_init( bp );
-    bson_append_new_oid( bp, "_id" );
-    bson_append_string( bp, "req_ip", p[i].req_ip );
-    bson_append_string( bp, "req_ident", p[i].req_ident );
-    bson_append_string( bp, "req_user", p[i].req_user );
-    bson_append_string( bp, "req_datetime", p[i].req_datetime );
-    bson_append_string( bp, "req_method", p[i].req_method );
-    bson_append_string( bp, "req_uri", p[i].req_uri );
-    bson_append_string( bp, "req_proto", p[i].req_proto );
-    bson_append_int( bp, "resp_code", p[i].resp_code );
-    bson_append_int( bp, "resp_bytes", atoi(p[i].resp_bytes) );
-    bson_append_string( bp, "req_referer", p[i].req_referer );
-    bson_append_string( bp, "req_agent", p[i].req_agent );
-    bson_finish( bp );
-    bps[i] = bp;
-    //printf("Printing bson object: %d\n",i);
-    //bson_print(bp);
-    //printf("end-bson-object: %d\n",i);
-  }
-  //bson_destroy ( bp );
-  //free (bps);
+    bson **bps;
+    bps = (bson **) malloc(sizeof(bson *) * counter);
+    int i = 0;
+    bson *bp = (bson *) malloc(sizeof(bson));
+    bson_init(bp);
+    for (i = 0; i < counter; i++) {
+	bson_append_new_oid(bp, "_id");
+	bson_append_string(bp, "req_ip", p[i].req_ip);
+	bson_append_string(bp, "req_ident", p[i].req_ident);
+	bson_append_string(bp, "req_user", p[i].req_user);
+	bson_append_string(bp, "req_datetime", p[i].req_datetime);
+	bson_append_string(bp, "req_method", p[i].req_method);
+	bson_append_string(bp, "req_uri", p[i].req_uri);
+	bson_append_string(bp, "req_proto", p[i].req_proto);
+	bson_append_int(bp, "resp_code", p[i].resp_code);
+	bson_append_int(bp, "resp_bytes", atoi(p[i].resp_bytes));
+	bson_append_string(bp, "req_referer", p[i].req_referer);
+	bson_append_string(bp, "req_agent", p[i].req_agent);
+	bson_finish(bp);
+	bps[i] = bp;
+    }
 
-  mongo_insert_batch( &conn, globalArgs.collection, (const bson **)bps, counter, NULL,0); 
-  int j = 0;
-  for ( j = 0; j < counter; j++ ) {
-    bson_finish( bps[j] );
-  }
-  mongo_destroy( &conn );
+    mongo_insert_batch(&conn, globalArgs.collection, (const bson **) bps,
+		       counter, NULL, 0);
+    bson_destroy(bp);
+    free(bp);
+    free(bps);
+    mongo_destroy(&conn);
     return (0);
 }
 
@@ -215,7 +210,7 @@ int chop(void)
 	    use_batch_size = BATCH_SIZE;
 	}
 
-	while (gzgets(pRead,log_line,8192) != NULL) {
+	while (gzgets(pRead, log_line, 8192) != NULL) {
 	    line_length = strlen(log_line);
 	    if (line_length > MAX_LINE_LENGTH - 1) {
 		printf
@@ -241,9 +236,11 @@ int chop(void)
 	    if (counter == (use_batch_size)) {
 		if (globalArgs.outFileName != NULL)
 		    flush_to_disk(p, counter);
-		if (globalArgs.host != NULL && globalArgs.collection != NULL)
+		if (globalArgs.host != NULL
+		    && globalArgs.collection != NULL)
 		    flush_to_mongo(p, counter);
-		if (globalArgs.outFileName == NULL && globalArgs.host == NULL)
+		if (globalArgs.outFileName == NULL
+		    && globalArgs.host == NULL)
 		    flush_to_stdout(p, counter);
 		counter = 0;
 	    } else {
@@ -257,11 +254,11 @@ int chop(void)
 	if (globalArgs.outFileName == NULL && globalArgs.host == NULL)
 	    flush_to_stdout(p, counter);
 
-        printf("Scanned a total of: %d lines.\n", running_total);
-        gzclose(pRead);
+	printf("Scanned a total of: %d lines.\n", running_total);
+	gzclose(pRead);
 
     }
-    
+
     free(p);
     return (0);
 }
