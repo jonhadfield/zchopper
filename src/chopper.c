@@ -33,7 +33,7 @@ struct globalArgs_t {
     char *type;			/* -t option */
     char *batch_size;		/* -b option */
     char *host;			/* -h option */
-    char *port;			/* -p option */
+    int  port;			/* -p option */
     char *collection;		/* -c option */
     char *search_string;	/* -s option */
     int verbose;		/* verbosity */
@@ -80,7 +80,7 @@ int flush_to_mongo(st_http_request * p, int counter)
 {
 
     mongo conn;
-    if( mongo_connect( &conn, globalArgs.host, atoi(globalArgs.port) ) != MONGO_OK ) {
+    if( mongo_connect( &conn, globalArgs.host, globalArgs.port ) != MONGO_OK ) {
       switch( conn.err ) {
         case MONGO_CONN_SUCCESS:
           printf("Connected to mongo\n"); 
@@ -130,7 +130,7 @@ int flush_to_mongo(st_http_request * p, int counter)
           printf( "FAIL: Mongo write concern invalid\n");
           break;
         case MONGO_CONN_FAIL:
-          printf( "FAIL: Mongo connection fail. Make sure it's listening at %s:%s\n",globalArgs.host,globalArgs.port);
+          printf( "FAIL: Mongo connection fail. Make sure it's listening at %s:%d\n",globalArgs.host,globalArgs.port);
           break;
       }
 
@@ -191,7 +191,7 @@ int chop(void)
     printf("type: %s\n", globalArgs.type);
     printf("batch_size: %s\n", globalArgs.batch_size);
     printf("host: %s\n", globalArgs.host);
-    printf("port: %s\n", globalArgs.port);
+    printf("port: %d\n", globalArgs.port);
     printf("collection: %s\n", globalArgs.collection);
     printf("search_string: %s\n", globalArgs.search_string);
     printf("verbose: %d\n", globalArgs.verbose);
@@ -241,9 +241,9 @@ int chop(void)
 	    if (counter == (use_batch_size)) {
 		if (globalArgs.outFileName != NULL)
 		    flush_to_disk(p, counter);
-		if (globalArgs.host != NULL && globalArgs.port != NULL && globalArgs.collection != NULL)
+		if (globalArgs.host != NULL && globalArgs.collection != NULL)
 		    flush_to_mongo(p, counter);
-		if (globalArgs.outFileName == NULL && globalArgs.host == NULL && globalArgs.port == NULL)
+		if (globalArgs.outFileName == NULL && globalArgs.host == NULL)
 		    flush_to_stdout(p, counter);
 		counter = 0;
 	    } else {
@@ -252,9 +252,9 @@ int chop(void)
 	}
 	if (globalArgs.outFileName != NULL)
 	    flush_to_disk(p, counter);
-	if (globalArgs.host != NULL && globalArgs.port != NULL && globalArgs.collection != NULL)
+	if (globalArgs.host != NULL && globalArgs.collection != NULL)
 	    flush_to_mongo(p, counter);
-	if (globalArgs.outFileName == NULL && globalArgs.host == NULL && globalArgs.port == NULL)
+	if (globalArgs.outFileName == NULL && globalArgs.host == NULL)
 	    flush_to_stdout(p, counter);
 
         printf("Scanned a total of: %d lines.\n", running_total);
@@ -275,7 +275,7 @@ int main(int argc, char *argv[])
     globalArgs.type = NULL;
     globalArgs.batch_size = NULL;
     globalArgs.host = NULL;
-    globalArgs.port = NULL;
+    globalArgs.port = 27017;
     globalArgs.collection = NULL;
     globalArgs.search_string = NULL;
     globalArgs.verbose = 0;
@@ -298,7 +298,7 @@ int main(int argc, char *argv[])
 	    globalArgs.host = optarg;
 	    break;
 	case 'p':
-	    globalArgs.port = optarg;
+	    globalArgs.port = atoi(optarg);
 	    break;
 	case 'c':
 	    globalArgs.collection = optarg;
