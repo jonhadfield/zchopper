@@ -196,19 +196,21 @@ int chop(void)
 
     int f_count;
     st_http_request *p;
-    p = (st_http_request *) calloc(BATCH_SIZE, sizeof(st_http_request));
-    printf("Size of st_http_request: %lu\n", sizeof(st_http_request));
-    for (f_count = 0; f_count < globalArgs.numInputFiles; f_count++) {
-	gzFile pRead = gzopen(globalArgs.inputFiles[f_count], "r");
-	char log_line[MAX_LINE_LENGTH];
-	int counter = 0;
-	int line_length = 0;
 	int use_batch_size;
 	if (globalArgs.batch_size != '\0') {
 	    use_batch_size = atoi(globalArgs.batch_size);
 	} else {
 	    use_batch_size = BATCH_SIZE;
 	}
+    printf("using batch size: %d\n", use_batch_size);
+    printf("Size of st_http_request: %lu\n", sizeof(st_http_request));
+    printf("Total mem = %lu\n",use_batch_size * sizeof(st_http_request));
+    p = (st_http_request *) calloc(use_batch_size, sizeof(st_http_request));
+    for (f_count = 0; f_count < globalArgs.numInputFiles; f_count++) {
+	gzFile pRead = gzopen(globalArgs.inputFiles[f_count], "r");
+	char log_line[MAX_LINE_LENGTH];
+	int counter = 0;
+	int line_length = 0;
 
 	while (gzgets(pRead, log_line, 8192) != NULL) {
 	    line_length = strlen(log_line);
@@ -232,8 +234,9 @@ int chop(void)
 		       p[counter].resp_bytes, p[counter].req_referer,
 		       p[counter].req_agent);
 		running_total++;
+		//printf("rt=%d\n",running_total);
 	    }
-	    if (counter == (use_batch_size)) {
+	    if (counter+1 == (use_batch_size)) {
 		if (globalArgs.outFileName != NULL)
 		    flush_to_disk(p, counter);
 		if (globalArgs.host != NULL
