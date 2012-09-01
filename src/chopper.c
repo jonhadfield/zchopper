@@ -66,7 +66,6 @@ int flush_to_disk(st_http_request * p, int counter)
 {
     FILE *pWrite;
     pWrite = fopen(globalArgs.outFileName, "a+");
-    //printf("flushing %d lines to disk\n", counter+1);
     int flush_count;
     for (flush_count = 0; flush_count < counter; flush_count++) {
 	fprintf(pWrite, "%s %d %s\n", p[flush_count].req_uri,
@@ -141,11 +140,11 @@ int flush_to_mongo(st_http_request * p, int counter)
 
     bson **bps;
     bps = (bson **) malloc(sizeof(bson *) * counter);
-    
+
     int i = 0;
     for (i = 0; i < counter; i++) {
-        bson *bp = (bson *) malloc(sizeof(bson));
-        bson_init(bp);
+	bson *bp = (bson *) malloc(sizeof(bson));
+	bson_init(bp);
 	bson_append_new_oid(bp, "_id");
 	bson_append_string(bp, "req_ip", p[i].req_ip);
 	bson_append_string(bp, "req_ident", p[i].req_ident);
@@ -160,23 +159,16 @@ int flush_to_mongo(st_http_request * p, int counter)
 	bson_append_string(bp, "req_agent", p[i].req_agent);
 	bson_finish(bp);
 	bps[i] = bp;
-        //bson_destroy(bp);
-        //printf("printing %d\n",i);
-        //bson_print(bps[i]);
-        //printf("end\n");
-        printf("In mongo - counter = %d and bson array = %d\n",counter,i);
-        printf("req_ip = %s\n",p[i].req_ip);
     }
-    //if(i>0)
     mongo_insert_batch(&conn, globalArgs.collection, (const bson **) bps,
 		       counter, NULL, 0);
     mongo_destroy(&conn);
     int j = 0;
-    for (j=0;j<counter;j++) {
-      bson_destroy(bps[j]);
-      free(bps[j]);
+    for (j = 0; j < counter; j++) {
+	bson_destroy(bps[j]);
+	free(bps[j]);
     }
-      free(bps);
+    free(bps);
     return (0);
 }
 
@@ -192,7 +184,7 @@ int flush_to_stdout(st_http_request * p, int counter)
 
 int chop(void)
 {
-    printf("outFileName: %s\n", globalArgs.outFileName);
+    printf("\nDEBUG\noutFileName: %s\n", globalArgs.outFileName);
     printf("type: %s\n", globalArgs.type);
     printf("batch_size: %s\n", globalArgs.batch_size);
     printf("host: %s\n", globalArgs.host);
@@ -200,7 +192,7 @@ int chop(void)
     printf("collection: %s\n", globalArgs.collection);
     printf("search_string: %s\n", globalArgs.search_string);
     printf("verbose: %d\n", globalArgs.verbose);
-    printf("numInputFiles: %d\n", globalArgs.numInputFiles);
+    printf("numInputFiles: %d\nDEBUG\n\n", globalArgs.numInputFiles);
 
     int running_total = 0;
 
@@ -235,22 +227,19 @@ int chop(void)
 	gzFile pRead = gzopen(globalArgs.inputFiles[f_count], "r");
 	char log_line[MAX_LINE_LENGTH];
 	int counter = 0;
-	int line_length = 0;
 	while (gzgets(pRead, log_line, 8192) != NULL) {
-	    line_length = strlen(log_line);
-	    if (line_length > MAX_LINE_LENGTH - 1) {
-		printf
-		    ("Encountered a stupidly long line of over 8KB\nLog file must be poop. Exiting.");
-		exit(1);
+	    if (strlen(log_line) > MAX_LINE_LENGTH - 1) {
+		invalid_lines++;
+		continue;
 	    } else {
 		if ((globalArgs.search_string != NULL)
 		    && (strstr(log_line, globalArgs.search_string) ==
 			NULL))
 		    continue;
-		if (strstr(log_line, "\"EOF\"")) { 
-                    invalid_lines++;
+		if (strstr(log_line, "\"EOF\"")) {
+		    invalid_lines++;
 		    continue;
-                }
+		}
 		sscanf(log_line,
 		       "%s %s %s [%[^]]] \"%s %s %[^\"]\" %d %s \"%[^\"]\" \"%[^\"]\"",
 		       p[counter].req_ip, p[counter].req_ident,
@@ -259,22 +248,20 @@ int chop(void)
 		       p[counter].req_proto, &p[counter].resp_code,
 		       p[counter].resp_bytes, p[counter].req_referer,
 		       p[counter].req_agent);
-		       printf("rt=%d\n",running_total);
 	    }
 	    if (counter + 1 == (use_batch_size)) {
-                printf("flushing from loop");
 		if (globalArgs.outFileName != NULL)
-		    flush_to_disk(p, counter+1);
+		    flush_to_disk(p, counter + 1);
 		if (globalArgs.host != NULL
 		    && globalArgs.collection != NULL)
-		    flush_to_mongo(p, counter+1);
+		    flush_to_mongo(p, counter + 1);
 		if (globalArgs.outFileName == NULL
 		    && globalArgs.host == NULL)
-		    flush_to_stdout(p, counter+1);
-		    counter = 0;
+		    flush_to_stdout(p, counter + 1);
+		counter = 0;
 	    } else {
 		running_total++;
-                counter++;
+		counter++;
 	    }
 	}
 	if (globalArgs.outFileName != NULL)
@@ -288,8 +275,7 @@ int chop(void)
 	gzclose(pRead);
 
     }
-    printf("Discarded: %d invalid lines.\n",invalid_lines);
-
+    printf("Discarded: %d invalid lines.\n", invalid_lines);
     free(p);
     return (0);
 }
