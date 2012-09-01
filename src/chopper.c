@@ -141,10 +141,11 @@ int flush_to_mongo(st_http_request * p, int counter)
 
     bson **bps;
     bps = (bson **) malloc(sizeof(bson *) * counter);
+    
     int i = 0;
-    bson *bp = (bson *) malloc(sizeof(bson));
-    bson_init(bp);
     for (i = 0; i < counter; i++) {
+        bson *bp = (bson *) malloc(sizeof(bson));
+        bson_init(bp);
 	bson_append_new_oid(bp, "_id");
 	bson_append_string(bp, "req_ip", p[i].req_ip);
 	bson_append_string(bp, "req_ident", p[i].req_ident);
@@ -159,14 +160,23 @@ int flush_to_mongo(st_http_request * p, int counter)
 	bson_append_string(bp, "req_agent", p[i].req_agent);
 	bson_finish(bp);
 	bps[i] = bp;
+        //bson_destroy(bp);
+        //printf("printing %d\n",i);
+        //bson_print(bps[i]);
+        //printf("end\n");
+        printf("In mongo - counter = %d and bson array = %d\n",counter,i);
+        printf("req_ip = %s\n",p[i].req_ip);
     }
-
+    //if(i>0)
     mongo_insert_batch(&conn, globalArgs.collection, (const bson **) bps,
 		       counter, NULL, 0);
-    bson_destroy(bp);
-    free(bp);
-    free(bps);
     mongo_destroy(&conn);
+    int j = 0;
+    for (j=0;j<counter;j++) {
+      bson_destroy(bps[j]);
+      free(bps[j]);
+    }
+      free(bps);
     return (0);
 }
 
@@ -220,12 +230,12 @@ int chop(void)
     }
     p = (st_http_request *) calloc(use_batch_size,
 				   sizeof(st_http_request));
+    int invalid_lines = 0;
     for (f_count = 0; f_count < globalArgs.numInputFiles; f_count++) {
 	gzFile pRead = gzopen(globalArgs.inputFiles[f_count], "r");
 	char log_line[MAX_LINE_LENGTH];
 	int counter = 0;
 	int line_length = 0;
-
 	while (gzgets(pRead, log_line, 8192) != NULL) {
 	    line_length = strlen(log_line);
 	    if (line_length > MAX_LINE_LENGTH - 1) {
@@ -237,8 +247,10 @@ int chop(void)
 		    && (strstr(log_line, globalArgs.search_string) ==
 			NULL))
 		    continue;
-		if (strstr(log_line, "\"EOF\""))
+		if (strstr(log_line, "\"EOF\"")) { 
+                    invalid_lines++;
 		    continue;
+                }
 		sscanf(log_line,
 		       "%s %s %s [%[^]]] \"%s %s %[^\"]\" %d %s \"%[^\"]\" \"%[^\"]\"",
 		       p[counter].req_ip, p[counter].req_ident,
@@ -247,21 +259,22 @@ int chop(void)
 		       p[counter].req_proto, &p[counter].resp_code,
 		       p[counter].resp_bytes, p[counter].req_referer,
 		       p[counter].req_agent);
-		running_total++;
-		//printf("rt=%d\n",running_total);
+		       printf("rt=%d\n",running_total);
 	    }
 	    if (counter + 1 == (use_batch_size)) {
+                printf("flushing from loop");
 		if (globalArgs.outFileName != NULL)
-		    flush_to_disk(p, counter);
+		    flush_to_disk(p, counter+1);
 		if (globalArgs.host != NULL
 		    && globalArgs.collection != NULL)
-		    flush_to_mongo(p, counter);
+		    flush_to_mongo(p, counter+1);
 		if (globalArgs.outFileName == NULL
 		    && globalArgs.host == NULL)
-		    flush_to_stdout(p, counter);
-		counter = 0;
+		    flush_to_stdout(p, counter+1);
+		    counter = 0;
 	    } else {
-		counter++;
+		running_total++;
+                counter++;
 	    }
 	}
 	if (globalArgs.outFileName != NULL)
@@ -275,6 +288,7 @@ int chop(void)
 	gzclose(pRead);
 
     }
+    printf("Discarded: %d invalid lines.\n",invalid_lines);
 
     free(p);
     return (0);
