@@ -9,18 +9,6 @@
 
 int chop(void)
 {
-    /*printf("\nDEBUG\noutFileName: %s\n", globalArgs.outFileName);
-       printf("type: %s\n", globalArgs.type);
-       printf("batch_size: %s\n", globalArgs.batch_size);
-       printf("host: %s\n", globalArgs.host);
-       printf("port: %d\n", globalArgs.port);
-       printf("collection: %s\n", globalArgs.collection);
-       printf("search_string: %s\n", globalArgs.search_string);
-       printf("verbose: %d\n", globalArgs.verbose);
-       printf("numInputFiles: %d\nDEBUG\n\n", globalArgs.numInputFiles); */
-
-    int running_total = 0;
-
     int f_count;
     st_http_request *p, *tmp;
     int use_batch_size;
@@ -47,12 +35,13 @@ int chop(void)
     }
     p = (st_http_request *) calloc(use_batch_size,
 				   sizeof(st_http_request));
-    int invalid_lines = 0;
+    int total_lines_scanned = 0, invalid_lines = 0, files_processed = 0;
     for (f_count = 0; f_count < globalArgs.numInputFiles; f_count++) {
 	gzFile pRead = gzopen(globalArgs.inputFiles[f_count], "r");
 	char log_line[MAX_LINE_LENGTH];
 	int counter = 0;
 	while (gzgets(pRead, log_line, 8192) != NULL) {
+            total_lines_scanned++;
 	    if (strlen(log_line) > MAX_LINE_LENGTH - 1) {
 		invalid_lines++;
 		continue;
@@ -85,7 +74,6 @@ int chop(void)
 		    flush_to_stdout(p, counter + 1);
 		counter = 0;
 	    } else {
-		running_total++;
 		counter++;
 	    }
 	}
@@ -95,12 +83,20 @@ int chop(void)
 	    flush_to_mongo(p, counter);
 	if (globalArgs.outFileName == NULL && globalArgs.host == NULL)
 	    flush_to_stdout(p, counter);
-
-	printf("Scanned a total of: %d lines.\n", running_total);
 	gzclose(pRead);
-
+	files_processed++;
     }
-    printf("Discarded: %d invalid lines.\n", invalid_lines);
     free(p);
+    printf("\n### STATS ###\n");
+    printf("Files read:\t%d\n", files_processed);
+    printf("Lines read:\t%d\n", total_lines_scanned);
+    printf("   valid:\t%d\n", total_lines_scanned - invalid_lines);
+    printf("   invalid:\t%d\n", invalid_lines);
+    printf("Batch size:\t%d\n", use_batch_size);
+    printf("Search string:\t%s\n", globalArgs.search_string);
+    printf("Output file:\t%s\n", globalArgs.outFileName);
+    printf("Host:\t%s\n", globalArgs.host);
+    printf("Port:\t%d\n", globalArgs.port);
+    printf("Collection:\t%s\n", globalArgs.collection);
     return (0);
 }
