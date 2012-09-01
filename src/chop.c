@@ -10,14 +10,14 @@
 int chop(void)
 {
     /*printf("\nDEBUG\noutFileName: %s\n", globalArgs.outFileName);
-    printf("type: %s\n", globalArgs.type);
-    printf("batch_size: %s\n", globalArgs.batch_size);
-    printf("host: %s\n", globalArgs.host);
-    printf("port: %d\n", globalArgs.port);
-    printf("collection: %s\n", globalArgs.collection);
-    printf("search_string: %s\n", globalArgs.search_string);
-    printf("verbose: %d\n", globalArgs.verbose);
-    printf("numInputFiles: %d\nDEBUG\n\n", globalArgs.numInputFiles);*/
+       printf("type: %s\n", globalArgs.type);
+       printf("batch_size: %s\n", globalArgs.batch_size);
+       printf("host: %s\n", globalArgs.host);
+       printf("port: %d\n", globalArgs.port);
+       printf("collection: %s\n", globalArgs.collection);
+       printf("search_string: %s\n", globalArgs.search_string);
+       printf("verbose: %d\n", globalArgs.verbose);
+       printf("numInputFiles: %d\nDEBUG\n\n", globalArgs.numInputFiles); */
 
     int running_total = 0;
 

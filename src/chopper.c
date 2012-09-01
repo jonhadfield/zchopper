@@ -4,10 +4,36 @@
 #include <unistd.h>
 #include <getopt.h>
 #include <string.h>
-#include "mongo.h"
 #include "chopper.h"
 
-const char chopper_usage_string[] = "chopper [-s|--search_string] [-o|--outfile <path>] [-t|--type] [-b|--batchsize <value>] [-h|--host <value>]\n"
+/* short options:
+ * *
+ * * -o outfile name - write to file rather than stdout
+ * * -t output type
+ * * -b batch size - number of lines to process before flushing - debug only
+ * * -h db host
+ * * -p port of db server
+ * * -c mongo db and collection
+ * * -s search string
+ * * -v verbose output
+ * * additional file names are used as input files
+ * *
+ * *
+ * * long options:
+ * *
+ * * --outfile
+ * * --type
+ * * --batchsize
+ * * --host
+ * * --port
+ * * --collection
+ * * --search_string
+ * * --verbose
+ * *
+ * */
+
+const char chopper_usage_string[] =
+    "chopper [-s|--search_string] [-o|--outfile <path>] [-t|--type] [-b|--batchsize <value>] [-h|--host <value>]\n"
     "           [-p|--port <value>] [-c|--collection <db.collection>][-s|--search_string <value>] [-v|--verbose]\n"
     "           [-v|--verbose] [-h|--help]\n"
     "           <command> [<args>]";

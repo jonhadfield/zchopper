@@ -4,39 +4,12 @@
 #define  MAX_USER            8
 #define  MAX_DATETIME       27
 #define  MAX_METHOD          8
-#define  MAX_URI          2083  //Safe limit?
+#define  MAX_URI          2083	//Safe limit?
 #define  MAX_PROTO           8
 #define  MAX_RESP_BYTES     20
-#define  MAX_REFERER      2083  //Safe limit?
-#define  MAX_AGENT        1024  //Safe limit?
+#define  MAX_REFERER      2083	//Safe limit?
+#define  MAX_AGENT        1024	//Safe limit?
 #define  BATCH_SIZE         50
-
-/* short options:
-*
-* -o outfile name - write to file rather than stdout
-* -t output type
-* -b batch size - number of lines to process before flushing - debug only
-* -h db host
-* -p port of db server
-* -c mongo db and collection
-* -s search string
-* -v verbose output
-* additional file names are used as input files
-*
-*
-* long options:
-*
-* --outfile
-* --type
-* --batchsize
-* --host
-* --port
-* --collection
-* --search_string
-* --verbose
-*
-*/
-
 
 typedef struct {
     char req_ip[MAX_IP];
@@ -53,21 +26,20 @@ typedef struct {
 } st_http_request;
 
 struct globalArgs_t {
-    const char *outFileName;    /* -o option */
+    const char *outFileName;	/* -o option */
     FILE *outFile;
-    char *type;                 /* -t option */
-    char *batch_size;           /* -b option */
-    char *host;                 /* -h option */
-    int port;                   /* -p option */
-    char *collection;           /* -c option */
-    char *search_string;        /* -s option */
-    int verbose;                /* verbosity */
-    char **inputFiles;          /* input files */
-    int numInputFiles;          /* # of input files */
+    char *type;			/* -t option */
+    char *batch_size;		/* -b option */
+    char *host;			/* -h option */
+    int port;			/* -p option */
+    char *collection;		/* -c option */
+    char *search_string;	/* -s option */
+    int verbose;		/* verbosity */
+    char **inputFiles;		/* input files */
+    int numInputFiles;		/* # of input files */
 } globalArgs;
 
-
-int flush_to_disk( st_http_request * , int  );
-int flush_to_mongo(st_http_request *, int  );
-int flush_to_stdout(st_http_request *, int  );
+int flush_to_disk(st_http_request *, int);
+int flush_to_mongo(st_http_request *, int);
+int flush_to_stdout(st_http_request *, int);
 int chop();

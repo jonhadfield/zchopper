@@ -2,19 +2,19 @@ PROG_NAME=chopper
 OBJECTS=flush.o chop.o chopper.o
 CFLAGS=-static-libgcc -O2 -Wall --std=c99
 LDFLAGS=
-LDLIBS=-Lext/mongo/lib -Iext/mongo/include -lz -lmongoc -I/usr/include -L/usr/lib64 -L/lib64
+LDLIBS=-Lext/mongo/lib -Iext/mongo/include -lz -lmongoc
 CC=gcc
 
 $(PROG_NAME) : $(OBJECTS)
 	$(CC) $(OBJECTS) -o $(PROG_NAME) $(LDLIBS)
 
 chopper.o : src/chopper.c src/chopper.h 
-	$(CC) $(CFLAGS) $(LDLIBS) -c ./src/chopper.c -Isrc
+	$(CC) $(CFLAGS) $(LDLIBS) -c ./src/chopper.c 
 
 flush.o : src/flush.c src/chopper.h
-	$(CC) $(CFLAGS) -Lext/mongo/lib -Iext/mongo/include $(LDLIBS) -c ./src/flush.c 
+	$(CC) $(CFLAGS) $(LDLIBS) -c ./src/flush.c 
 
-chop.o	: src/chop.c src/chopper.h flush.o
+chop.o	: src/chop.c src/chopper.h
 	$(CC) $(CFLAGS) $(LDLIBS) -c ./src/chop.c 
 
 clean:
