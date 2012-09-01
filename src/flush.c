@@ -22,6 +22,7 @@ int flush_to_mongo(st_http_request * p, int counter)
 {
 
     mongo conn;
+    mongo_set_op_timeout( &conn, 5000 );
     if (mongo_connect(&conn, globalArgs.host, globalArgs.port) != MONGO_OK) {
 	switch (conn.err) {
 	case MONGO_CONN_SUCCESS:
