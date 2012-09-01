@@ -3,7 +3,7 @@
 #define  MAX_IDENT           8
 #define  MAX_USER            8
 #define  MAX_DATETIME       27
-#define  MAX_METHOD          7
+#define  MAX_METHOD          8
 #define  MAX_URI          2083  //Safe limit?
 #define  MAX_PROTO           8
 #define  MAX_RESP_BYTES     20
