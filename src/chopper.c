@@ -195,17 +195,31 @@ int chop(void)
     int running_total = 0;
 
     int f_count;
-    st_http_request *p;
-	int use_batch_size;
-	if (globalArgs.batch_size != '\0') {
-	    use_batch_size = atoi(globalArgs.batch_size);
-	} else {
-	    use_batch_size = BATCH_SIZE;
-	}
+    st_http_request *p, *tmp;
+    int use_batch_size;
+    if (globalArgs.batch_size != '\0') {
+	use_batch_size = atoi(globalArgs.batch_size);
+    } else {
+	use_batch_size = BATCH_SIZE;
+    }
     printf("using batch size: %d\n", use_batch_size);
     printf("Size of st_http_request: %lu\n", sizeof(st_http_request));
-    printf("Total mem = %lu\n",use_batch_size * sizeof(st_http_request));
-    p = (st_http_request *) calloc(use_batch_size, sizeof(st_http_request));
+    printf("Total mem = %lu\n", use_batch_size * sizeof(st_http_request));
+    printf("Total mem in MB = %lu\n",
+	   use_batch_size * sizeof(st_http_request) / 1024 / 1024);
+    tmp =
+	(st_http_request *) calloc(use_batch_size,
+				   sizeof(st_http_request));
+    if (tmp == NULL) {
+	printf("Failed to allocate memory.\n");
+	free(tmp);
+	exit(1);
+    } else {
+	p = tmp;
+	free(tmp);
+    }
+    p = (st_http_request *) calloc(use_batch_size,
+				   sizeof(st_http_request));
     for (f_count = 0; f_count < globalArgs.numInputFiles; f_count++) {
 	gzFile pRead = gzopen(globalArgs.inputFiles[f_count], "r");
 	char log_line[MAX_LINE_LENGTH];
@@ -236,7 +250,7 @@ int chop(void)
 		running_total++;
 		//printf("rt=%d\n",running_total);
 	    }
-	    if (counter+1 == (use_batch_size)) {
+	    if (counter + 1 == (use_batch_size)) {
 		if (globalArgs.outFileName != NULL)
 		    flush_to_disk(p, counter);
 		if (globalArgs.host != NULL
