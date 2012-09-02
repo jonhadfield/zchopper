@@ -9,6 +9,9 @@
 
 int chop(void)
 {
+    clock_t start, end;
+    double cpu_time_used;
+    start = clock();
     int f_count;
     st_http_request *p, *tmp;
     int use_batch_size;
@@ -41,7 +44,7 @@ int chop(void)
 	char log_line[MAX_LINE_LENGTH];
 	int counter = 0;
 	while (gzgets(pRead, log_line, 8192) != NULL) {
-            total_lines_scanned++;
+	    total_lines_scanned++;
 	    if (strlen(log_line) > MAX_LINE_LENGTH - 1) {
 		invalid_lines++;
 		continue;
@@ -87,7 +90,9 @@ int chop(void)
 	files_processed++;
     }
     free(p);
-    printf("\n### STATS ###\n");
+    end = clock();
+    cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
+    printf("\n_____ Summary _____\n\n");
     printf("Files read:\t%d\n", files_processed);
     printf("Lines read:\t%d\n", total_lines_scanned);
     printf("   valid:\t%d\n", total_lines_scanned - invalid_lines);
@@ -98,5 +103,6 @@ int chop(void)
     printf("Host:\t%s\n", globalArgs.host);
     printf("Port:\t%d\n", globalArgs.port);
     printf("Collection:\t%s\n", globalArgs.collection);
+    printf("Time taken:\t%5.2fs\n", cpu_time_used);
     return (0);
 }
