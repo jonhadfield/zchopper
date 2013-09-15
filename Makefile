@@ -1,21 +1,21 @@
-PROG_NAME=chopper
-OBJECTS=flush.o chop.o chopper.o
-CFLAGS=-static-libgcc -O2 -Wall --std=c99
+PROG_NAME=zchopper
+OBJECTS=flush.o zchopper.o validation.o
+CFLAGS=-static-libgcc -O2 -Wall --std=c99 -pedantic
 LDFLAGS=
 LDLIBS=-Lext/mongo/lib -Iext/mongo/include -lz -lmongoc
-CC=gcc
+CC=gcc -g
 
 $(PROG_NAME) : $(OBJECTS)
 	$(CC) $(OBJECTS) -o $(PROG_NAME) $(LDLIBS)
 
-chopper.o : src/chopper.c src/chopper.h 
-	$(CC) $(CFLAGS) $(LDLIBS) -c ./src/chopper.c 
+zchopper.o : src/zchopper.c src/zchopper.h 
+	$(CC) $(CFLAGS) $(LDLIBS) -c ./src/zchopper.c 
 
-flush.o : src/flush.c src/chopper.h
+flush.o : src/flush.c src/zchopper.h
 	$(CC) $(CFLAGS) $(LDLIBS) -c ./src/flush.c 
 
-chop.o	: src/chop.c src/chopper.h
-	$(CC) $(CFLAGS) $(LDLIBS) -c ./src/chop.c 
+validation.o : src/validation.c src/zchopper.h
+	$(CC) $(CFLAGS) $(LDLIBS) -c ./src/validation.c 
 
 clean:
 	@- $(RM) $(PROG_NAME)
