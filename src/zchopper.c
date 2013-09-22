@@ -9,8 +9,8 @@
 
 /* short options:
  * *
- * * -o outfile name - write to file rather than stdout
  * * -t output type
+ * * -f output fields 
  * * -b batch size - number of lines to process before flushing - debug only
  * * -h db host
  * * -p port of db server
@@ -23,8 +23,8 @@
  * *
  * * long options:
  * *
- * * --outfile
  * * --type
+ * * --fields
  * * --batchsize
  * * --host
  * * --port
@@ -36,16 +36,16 @@
  * */
 
 const char zchopper_usage_string[] =
-    "zchopper [-s|--search_string] [-o|--outfile <path>] [-t|--type] [-b|--batchsize <value>] [-h|--host <value>]\n"
+    "zchopper [-s|--search_string] [-t|--type] [-f|--fields] [-b|--batchsize <value>] [-h|--host <value>]\n"
     "           [-p|--port <value>] [-c|--collection <db.collection>] [-s|--search_string <value>] [-O|--outfile-invalid] [-v|--verbose]\n"
     "           [-v|--verbose] [-h|--help]\n"
     "           <command> [<args>]";
 
-static const char *optString = "o:t:b:h:p:c:s:O:v?";
+static const char *optString = "t:f:b:h:p:c:s:O:v?";
 
 static const struct option longOpts[] = {
-    {"outFileName", required_argument, NULL, 'o'},
     {"type", required_argument, NULL, 't'},
+    {"fields", required_argument, NULL, 'f'},
     {"batch_size", required_argument, NULL, 'b'},
     {"host", required_argument, NULL, 'h'},
     {"port", required_argument, NULL, 'p'},
@@ -75,10 +75,9 @@ int main(int argc, char *argv[])
 {
     int opt = 0;
     int longIndex = 0;
-    globalArgs.outFileName = NULL;
     globalArgs.outFileNameInvalid = NULL;
-    globalArgs.outFile = NULL;
     globalArgs.type = NULL;
+    globalArgs.fields = NULL;
     globalArgs.batch_size = NULL;
     globalArgs.host = NULL;
     globalArgs.port = 27017;
@@ -88,14 +87,16 @@ int main(int argc, char *argv[])
     globalArgs.inputFiles = NULL;
     globalArgs.numInputFiles = 0;
 
+    if (argc == 1)
+	display_usage();
     opt = getopt_long(argc, argv, optString, longOpts, &longIndex);
     while (opt != -1) {
 	switch (opt) {
-	case 'o':
-	    globalArgs.outFileName = optarg;
-	    break;
 	case 't':
 	    globalArgs.type = optarg;
+	    break;
+	case 'f':
+	    globalArgs.fields = optarg;
 	    break;
 	case 'b':
 	    globalArgs.batch_size = optarg;
@@ -172,7 +173,6 @@ int main(int argc, char *argv[])
 	    printf("Processing file [%zu/%d]: %s\n",
 		   f_count + 1, globalArgs.numInputFiles,
 		   globalArgs.inputFiles[f_count]);
-         
         size_t line_index = 0;    
 	    while (gzgets(input_file,log_line, 8192) != NULL) {
 		total_lines_read++;
@@ -259,7 +259,6 @@ int main(int argc, char *argv[])
     fprintf(stderr, "   invalid:\t%zu\n", total_lines_invalid);
     fprintf(stderr, "Batch size:\t%zu\n", use_batch_size);
     fprintf(stderr, "Search string:\t%s\n", globalArgs.search_string);
-    fprintf(stderr, "Output file:\t%s\n", globalArgs.outFileName);
     fprintf(stderr, "Output invalid:\t%s\n",
 	    globalArgs.outFileNameInvalid);
     fprintf(stderr, "Host:\t%s\n", globalArgs.host);

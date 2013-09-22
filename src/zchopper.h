@@ -5,7 +5,7 @@
 #define  MAX_DATETIME         27
 #define  MAX_METHOD            8
 #define  MAX_URI            2038	//Safe limit?
-#define  MAX_PROTO             8
+#define  MAX_PROTO             9
 #define  MAX_RESP_BYTES       20
 #define  MAX_REFERER        2038	//Safe limit?
 #define  MAX_AGENT          1024	//Safe limit?
@@ -28,9 +28,8 @@ typedef struct {
 } st_http_request;
 
 struct globalArgs_t {
-    const char *outFileName;	/* -o option */
-    FILE *outFile;
     char *type;			/* -t option */
+    char *fields;		/* -f option */
     char *batch_size;		/* -b option */
     char *host;			/* -h option */
     int port;			/* -p option */
@@ -46,7 +45,6 @@ void flush_valid(st_http_request *, int);
 void flush_invalid(char **, int);
 _Bool is_scanned_line_valid(st_http_request);
 _Bool is_unscanned_line_valid(char *);
-int flush_to_disk(st_http_request *, int);
 int flush_to_mongo(st_http_request *, int);
 int flush_to_stdout(st_http_request *, int);
 int chop();

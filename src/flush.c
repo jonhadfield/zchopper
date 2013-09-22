@@ -6,12 +6,11 @@
 
 void flush_valid(st_http_request * scanned_lines, int countval)
 {
-    if (globalArgs.outFileName != NULL)
-	flush_to_disk(scanned_lines, countval);
-    if (globalArgs.host != NULL && globalArgs.collection != NULL)
+    if (globalArgs.host != NULL && globalArgs.collection != NULL) {
 	flush_to_mongo(scanned_lines, countval);
-    if (globalArgs.outFileName == NULL && globalArgs.host == NULL)
+    } else {
 	flush_to_stdout(scanned_lines, countval);
+    }
 }
 
 void flush_invalid(char **invalid_lines, int countval)
@@ -25,19 +24,6 @@ void flush_invalid(char **invalid_lines, int countval)
 	}
 	fclose(pWrite);
     }
-}
-
-int flush_to_disk(st_http_request * p, int counter)
-{
-    FILE *pWrite;
-    pWrite = fopen(globalArgs.outFileName, "a+");
-    int flush_count;
-    for (flush_count = 0; flush_count < counter; flush_count++) {
-	fprintf(pWrite, "%s %d %s\n", p[flush_count].req_uri,
-		p[flush_count].resp_code, p[flush_count].resp_bytes);
-    }
-    fclose(pWrite);
-    return (0);
 }
 
 int flush_to_mongo(st_http_request * p, int counter)
@@ -108,22 +94,34 @@ int flush_to_mongo(st_http_request * p, int counter)
     bson **bps;
     bps = (bson **) malloc(sizeof(bson *) * counter);
 
+    char *fields = globalArgs.fields;
     int i = 0;
     for (i = 0; i < counter; i++) {
 	bson *bp = (bson *) malloc(sizeof(bson));
 	bson_init(bp);
 	bson_append_new_oid(bp, "_id");
-	bson_append_string(bp, "req_ip", p[i].req_ip);
-	bson_append_string(bp, "req_ident", p[i].req_ident);
-	bson_append_string(bp, "req_user", p[i].req_user);
-	bson_append_string(bp, "req_datetime", p[i].req_datetime);
-	bson_append_string(bp, "req_method", p[i].req_method);
-	bson_append_string(bp, "req_uri", p[i].req_uri);
-	bson_append_string(bp, "req_proto", p[i].req_proto);
-	bson_append_int(bp, "resp_code", p[i].resp_code);
-	bson_append_int(bp, "resp_bytes", atoi(p[i].resp_bytes));
-	bson_append_string(bp, "req_referer", p[i].req_referer);
-	bson_append_string(bp, "req_agent", p[i].req_agent);
+	if (fields == NULL || strstr(fields, "req_ip") != NULL)
+	    bson_append_string(bp, "req_ip", p[i].req_ip);
+	if (fields == NULL || strstr(fields, "req_ident") != NULL)
+	    bson_append_string(bp, "req_ident", p[i].req_ident);
+	if (fields == NULL || strstr(fields, "req_user") != NULL)
+	    bson_append_string(bp, "req_user", p[i].req_user);
+	if (fields == NULL || strstr(fields, "req_datetime") != NULL)
+	    bson_append_string(bp, "req_datetime", p[i].req_datetime);
+	if (fields == NULL || strstr(fields, "req_method") != NULL)
+	    bson_append_string(bp, "req_method", p[i].req_method);
+	if (fields == NULL || strstr(fields, "req_uri") != NULL)
+	    bson_append_string(bp, "req_uri", p[i].req_uri);
+	if (fields == NULL || strstr(fields, "req_proto") != NULL)
+	    bson_append_string(bp, "req_proto", p[i].req_proto);
+	if (fields == NULL || strstr(fields, "resp_code") != NULL)
+	    bson_append_int(bp, "resp_code", p[i].resp_code);
+	if (fields == NULL || strstr(fields, "resp_bytes") != NULL)
+	    bson_append_int(bp, "resp_bytes", atoi(p[i].resp_bytes));
+	if (fields == NULL || strstr(fields, "req_referer") != NULL)
+	    bson_append_string(bp, "req_referer", p[i].req_referer);
+	if (fields == NULL || strstr(fields, "req_agent") != NULL)
+	    bson_append_string(bp, "req_agent", p[i].req_agent);
 	bson_finish(bp);
 	bps[i] = bp;
     }
@@ -143,15 +141,32 @@ int flush_to_mongo(st_http_request * p, int counter)
 
 int flush_to_stdout(st_http_request * p, int counter)
 {
+    char *fields = globalArgs.fields;
     int flush_count;
     for (flush_count = 0; flush_count < counter; flush_count++) {
-	printf("%s %s %s [%s] \"%s %s %s\" %d %s \"%s\" \"%s\"\n",
-	       p[flush_count].req_ip, p[flush_count].req_ident,
-	       p[flush_count].req_user, p[flush_count].req_datetime,
-	       p[flush_count].req_method, p[flush_count].req_uri,
-	       p[flush_count].req_proto, p[flush_count].resp_code,
-	       p[flush_count].resp_bytes, p[flush_count].req_referer,
-	       p[flush_count].req_agent);
+	if (fields == NULL || strstr(fields, "req_ip") != NULL)
+	    printf("%s ", p[flush_count].req_ip);
+	if (fields == NULL || strstr(fields, "req_ident") != NULL)
+	    printf("%s ", p[flush_count].req_ident);
+	if (fields == NULL || strstr(fields, "req_user") != NULL)
+	    printf("%s ", p[flush_count].req_user);
+	if (fields == NULL || strstr(fields, "req_datetime") != NULL)
+	    printf("[%s] ", p[flush_count].req_datetime);
+	if (fields == NULL || strstr(fields, "req_method") != NULL)
+	    printf("\"%s ", p[flush_count].req_method);
+	if (fields == NULL || strstr(fields, "req_uri") != NULL)
+	    printf("%s ", p[flush_count].req_uri);
+	if (fields == NULL || strstr(fields, "req_proto") != NULL)
+	    printf("%s\" ", p[flush_count].req_proto);
+	if (fields == NULL || strstr(fields, "resp_code") != NULL)
+	    printf("%d ", p[flush_count].resp_code);
+	if (fields == NULL || strstr(fields, "resp_bytes") != NULL)
+	    printf("%s ", p[flush_count].resp_bytes);
+	if (fields == NULL || strstr(fields, "req_referer") != NULL)
+	    printf("\"%s\" ", p[flush_count].req_referer);
+	if (fields == NULL || strstr(fields, "req_agent") != NULL)
+	    printf("\"%s\"", p[flush_count].req_agent);
+	printf("\n");
     }
     return (0);
 }
